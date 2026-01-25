@@ -186,9 +186,16 @@ Base your estimates on:
 - Standard nutritional databases
 - Be realistic and provide your best estimates`;
 
+  // Responses API expects message format for multimodal input
   const input = [
-    { type: 'input_text', text: prompt },
-    { type: 'input_image', image_url: imageBase64 }
+    {
+      type: 'message',
+      role: 'user',
+      content: [
+        { type: 'input_text', text: prompt },
+        { type: 'input_image', image_url: imageBase64 }
+      ]
+    }
   ];
 
   const outputText = await callResponsesAPI(apiKey, input, SYSTEM_PROMPT, 2000);
