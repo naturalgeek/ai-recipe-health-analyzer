@@ -65,14 +65,51 @@ export function Settings() {
         </button>
 
         <div className="api-help">
-          <h4>How to get an API key:</h4>
-          <ol>
-            <li>Go to <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a></li>
-            <li>Sign in or create an account</li>
-            <li>Navigate to API Keys section</li>
-            <li>Create a new secret key</li>
-            <li>Copy and paste it above</li>
-          </ol>
+          <h4>How to get an OpenAI API key:</h4>
+
+          <div className="tutorial-section">
+            <h5>Step 1: Create an OpenAI Account</h5>
+            <ol>
+              <li>Go to <a href="https://platform.openai.com/signup" target="_blank" rel="noopener noreferrer">platform.openai.com/signup</a></li>
+              <li>Sign up with your email, Google, Microsoft, or Apple account</li>
+              <li>Verify your email address if required</li>
+            </ol>
+          </div>
+
+          <div className="tutorial-section">
+            <h5>Step 2: Add Payment Method (Required)</h5>
+            <ol>
+              <li>Go to <a href="https://platform.openai.com/account/billing" target="_blank" rel="noopener noreferrer">Billing settings</a></li>
+              <li>Click "Add payment method"</li>
+              <li>Enter your credit card details</li>
+              <li>Optionally set a usage limit to control costs</li>
+            </ol>
+            <p className="tutorial-note">
+              API usage is pay-as-you-go. Analyzing a recipe typically costs less than $0.01.
+              You can set a monthly budget limit to avoid unexpected charges.
+            </p>
+          </div>
+
+          <div className="tutorial-section">
+            <h5>Step 3: Generate Your API Key</h5>
+            <ol>
+              <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">API Keys page</a></li>
+              <li>Click "Create new secret key"</li>
+              <li>Give it a name (e.g., "Recipe Assesser")</li>
+              <li>Click "Create secret key"</li>
+              <li><strong>Important:</strong> Copy the key immediately - you won't be able to see it again!</li>
+              <li>Paste the key in the field above</li>
+            </ol>
+          </div>
+
+          <div className="tutorial-section">
+            <h5>Security Tips</h5>
+            <ul>
+              <li>Never share your API key with anyone</li>
+              <li>Your key is stored only in your browser's local storage</li>
+              <li>If you suspect your key is compromised, delete it and create a new one</li>
+            </ul>
+          </div>
         </div>
       </div>
 

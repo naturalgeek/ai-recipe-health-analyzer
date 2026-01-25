@@ -5,9 +5,10 @@ import { RecipeList } from './components/RecipeList';
 import { RecipeDetail } from './components/RecipeDetail';
 import { Settings } from './components/Settings';
 import { IngredientSearch } from './components/IngredientSearch';
+import { PasteRecipe } from './components/PasteRecipe';
 import './App.css';
 
-type Tab = 'recipes' | 'settings';
+type Tab = 'recipes' | 'quick' | 'settings';
 type SidebarView = 'recipes' | 'ingredients';
 
 function AppContent() {
@@ -36,6 +37,12 @@ function AppContent() {
             Recipes
           </button>
           <button
+            className={`nav-btn ${activeTab === 'quick' ? 'active' : ''}`}
+            onClick={() => setActiveTab('quick')}
+          >
+            Quick Assess
+          </button>
+          <button
             className={`nav-btn ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveTab('settings')}
           >
@@ -47,6 +54,8 @@ function AppContent() {
       <main className="app-main">
         {activeTab === 'settings' ? (
           <Settings />
+        ) : activeTab === 'quick' ? (
+          <PasteRecipe />
         ) : (
           <>
             {recipes.length === 0 && (

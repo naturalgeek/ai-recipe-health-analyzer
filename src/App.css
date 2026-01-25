@@ -678,14 +678,48 @@ body {
 
 .api-help h4 {
   margin-top: 0;
+  margin-bottom: 1rem;
 }
 
-.api-help ol {
+.api-help ol,
+.api-help ul {
   padding-left: 1.25rem;
+  margin: 0.5rem 0;
 }
 
 .api-help a {
   color: var(--primary-color);
+}
+
+.tutorial-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tutorial-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.tutorial-section h5 {
+  margin: 0 0 0.5rem;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.tutorial-section li {
+  margin-bottom: 0.25rem;
+}
+
+.tutorial-note {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #e3f2fd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #1565c0;
 }
 
 .disclaimer {
@@ -851,6 +885,131 @@ body {
 
 .ingredient-recipe-item:hover {
   background: var(--bg-color);
+  color: var(--primary-color);
+}
+
+/* Paste Recipe */
+.paste-recipe {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+.paste-recipe-input {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.paste-recipe-input h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+}
+
+.paste-description {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.recipe-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.recipe-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.portions-input {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff8e1;
+  border-radius: 4px;
+  border: 1px solid #ffcc80;
+}
+
+.portions-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #e65100;
+}
+
+.portions-field {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100px;
+}
+
+.portions-field:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.detected-portions {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.edit-portions-btn {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--primary-color);
+}
+
+.edit-portions-btn:hover {
+  background: var(--bg-color);
+}
+
+.paste-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.clear-paste-btn {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.clear-paste-btn:hover {
+  background: var(--bg-color);
+  border-color: var(--text-muted);
+}
+
+.paste-assessment {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.paste-assessment h3 {
+  margin-top: 0;
   color: var(--primary-color);
 }
 
