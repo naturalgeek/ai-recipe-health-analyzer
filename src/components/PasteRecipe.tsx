@@ -391,12 +391,14 @@ function DietaryTooltip({ items }: { items: string[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="dietary-tooltip-container">
+    <div
+      className="dietary-tooltip-container"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
       <button
         className="dietary-tooltip-trigger"
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
         aria-label="View dietary requirements"
       >
         ⓘ
