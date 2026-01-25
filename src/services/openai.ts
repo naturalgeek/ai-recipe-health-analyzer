@@ -46,14 +46,10 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
   };
 }
 
-export async function extractRecipeFromHtml(
-  html: string,
+export async function extractRecipeFromUrl(
   url: string,
   apiKey: string
 ): Promise<string> {
-  // Truncate HTML if too long (keep first 50k chars to stay within token limits)
-  const truncatedHtml = html.length > 50000 ? html.substring(0, 50000) + '\n[...truncated]' : html;
-
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
@@ -61,22 +57,27 @@ export async function extractRecipeFromHtml(
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: `You are a recipe extraction assistant. Extract recipe information from HTML content and format it clearly.
-Extract: recipe name, servings/portions, prep time, cook time, ingredients list, and instructions.
-Format the output as clean, readable text that can be used for nutritional analysis.
-If you cannot find a recipe in the content, respond with "NO_RECIPE_FOUND".`
+          content: `You are a recipe extraction assistant. When given a URL, fetch and extract the recipe information.
+Format the output clearly with:
+- Recipe name
+- Servings/portions
+- Prep time and cook time (if available)
+- Complete ingredients list with quantities
+- Step-by-step instructions
+
+Format as clean, readable text. If you cannot access the URL or find a recipe, explain the issue.`
         },
         {
           role: 'user',
-          content: `Extract the recipe from this webpage (${url}):\n\n${truncatedHtml}`
+          content: `Extract the recipe from the following URL: ${url}`
         }
       ],
       temperature: 0.2,
-      max_tokens: 2000
+      max_tokens: 3000
     })
   });
 
@@ -88,8 +89,15 @@ If you cannot find a recipe in the content, respond with "NO_RECIPE_FOUND".`
   const data = await response.json();
   const content = data.choices[0]?.message?.content;
 
-  if (!content || content.includes('NO_RECIPE_FOUND')) {
-    throw new Error('Could not find a recipe on this page');
+  if (!content) {
+    throw new Error('No response from OpenAI');
+  }
+
+  // Check if the response indicates an error accessing the URL
+  const lowerContent = content.toLowerCase();
+  if (lowerContent.includes('cannot access') || lowerContent.includes('unable to access') ||
+      lowerContent.includes('cannot browse') || lowerContent.includes('unable to browse')) {
+    throw new Error('Could not access the URL. Please copy and paste the recipe text instead.');
   }
 
   return content;

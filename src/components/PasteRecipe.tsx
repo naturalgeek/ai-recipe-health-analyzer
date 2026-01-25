@@ -1,44 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { assessRecipeNutrition, assessImageNutrition, extractRecipeFromHtml } from '../services/openai';
+import { assessRecipeNutrition, assessImageNutrition, extractRecipeFromUrl } from '../services/openai';
 import type { Recipe, NutritionalAssessment } from '../types/recipe';
-
-async function fetchHtmlFromUrl(url: string): Promise<string> {
-  // List of CORS proxies to try
-  const proxies = [
-    (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    (u: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
-
-  // Try direct fetch first
-  try {
-    const response = await fetch(url, { mode: 'cors' });
-    if (response.ok) {
-      return await response.text();
-    }
-  } catch {
-    // CORS error expected, continue with proxies
-  }
-
-  // Try each proxy
-  for (const getProxyUrl of proxies) {
-    try {
-      const proxyUrl = getProxyUrl(url);
-      const response = await fetch(proxyUrl);
-      if (response.ok) {
-        const html = await response.text();
-        if (html.length > 100) {
-          return html;
-        }
-      }
-    } catch {
-      // Try next proxy
-    }
-  }
-
-  throw new Error('Could not fetch the webpage. Please copy and paste the recipe text instead.');
-}
 
 function detectPortions(text: string): string | null {
   const patterns = [
@@ -110,13 +73,11 @@ export function PasteRecipe() {
     setError(null);
 
     try {
-      // Fetch the HTML from the URL
-      const html = await fetchHtmlFromUrl(recipeUrl);
-      // Use AI to extract the recipe
-      const recipeText = await extractRecipeFromHtml(html, recipeUrl, config.openaiApiKey);
+      // Use AI to extract the recipe directly from the URL
+      const recipeText = await extractRecipeFromUrl(recipeUrl, config.openaiApiKey);
       handleTextChange(recipeText);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch recipe');
+      setError(err instanceof Error ? err.message : 'Failed to extract recipe');
     } finally {
       setIsFetching(false);
     }
