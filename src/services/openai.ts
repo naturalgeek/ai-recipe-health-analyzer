@@ -78,7 +78,8 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
 async function callResponsesAPI(
   apiKey: string,
   input: string | Array<{ type: string; text?: string; image_url?: string }>,
-  instructions?: string
+  instructions?: string,
+  maxCompletionTokens?: number
 ): Promise<string> {
   const body: Record<string, unknown> = {
     model: 'gpt-5.2',
@@ -87,6 +88,10 @@ async function callResponsesAPI(
 
   if (instructions) {
     body.instructions = instructions;
+  }
+
+  if (maxCompletionTokens) {
+    body.max_completion_tokens = maxCompletionTokens;
   }
 
   const response = await fetch(OPENAI_RESPONSES_URL, {
@@ -186,7 +191,7 @@ Base your estimates on:
     { type: 'input_image', image_url: imageBase64 }
   ];
 
-  const outputText = await callResponsesAPI(apiKey, input, SYSTEM_PROMPT);
+  const outputText = await callResponsesAPI(apiKey, input, SYSTEM_PROMPT, 2000);
   return parseAssessmentResponse(outputText, `image-${Date.now()}`);
 }
 
