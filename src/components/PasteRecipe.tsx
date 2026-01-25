@@ -144,7 +144,6 @@ export function PasteRecipe() {
   const [recipeText, setRecipeText] = useState('');
   const [recipeUrl, setRecipeUrl] = useState('');
   const [portions, setPortions] = useState('');
-  const [showPortionsInput, setShowPortionsInput] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [assessment, setAssessment] = useState<NutritionalAssessment | null>(null);
@@ -195,7 +194,6 @@ export function PasteRecipe() {
     reader.onload = () => {
       setRecipeImage(reader.result as string);
       setAssessment(null);
-      setShowPortionsInput(true); // Always ask for portions with images
       if (!portions) setPortions('1');
     };
     reader.readAsDataURL(file);
@@ -211,10 +209,8 @@ export function PasteRecipe() {
     const detected = detectPortions(text);
     if (detected) {
       setPortions(detected);
-      setShowPortionsInput(false);
-    } else {
-      setShowPortionsInput(text.length > 50);
-      if (!portions) setPortions('');
+    } else if (!portions) {
+      setPortions('');
     }
   };
 
@@ -228,8 +224,7 @@ export function PasteRecipe() {
     }
 
     if (!portions.trim()) {
-      setShowPortionsInput(true);
-      setError('Please specify the number of portions');
+      setError('Please specify the number of servings');
       return;
     }
 
@@ -263,7 +258,6 @@ export function PasteRecipe() {
     setRecipeText('');
     setRecipeUrl('');
     setPortions('');
-    setShowPortionsInput(false);
     setAssessment(null);
     setRecipeImage(null);
     setParsedRecipe(null);
@@ -309,12 +303,12 @@ export function PasteRecipe() {
         </div>
 
         {!parsedRecipe ? (
-          <textarea
-            className="recipe-textarea"
-            placeholder="Paste your recipe here (ingredients, instructions, etc.)..."
+          <input
+            type="text"
+            className="recipe-text-input"
+            placeholder="Paste your recipe here..."
             value={recipeText}
             onChange={(e) => handleTextChange(e.target.value)}
-            rows={10}
           />
         ) : (
           <ParsedRecipeDisplay recipe={parsedRecipe} onEdit={() => setParsedRecipe(null)} />
@@ -324,9 +318,9 @@ export function PasteRecipe() {
           <span>or upload a photo</span>
         </div>
 
-        <div className="image-upload-section">
+        <div className="image-upload-section compact">
           {!recipeImage ? (
-            <label className="image-upload-zone">
+            <label className="image-upload-zone compact">
               <input
                 type="file"
                 accept="image/*"
@@ -334,10 +328,10 @@ export function PasteRecipe() {
                 style={{ display: 'none' }}
               />
               <span className="upload-icon">📷</span>
-              <span>Click to upload a recipe or dish photo</span>
+              <span>Upload photo</span>
             </label>
           ) : (
-            <div className="image-preview">
+            <div className="image-preview compact">
               <img src={recipeImage} alt="Recipe" />
               <button className="remove-image-btn" onClick={handleRemoveImage}>
                 Remove
@@ -346,9 +340,9 @@ export function PasteRecipe() {
           )}
         </div>
 
-        {showPortionsInput && (
-          <div className="portions-input">
-            <label htmlFor="portions">Number of portions/servings:</label>
+        <div className="action-row">
+          <div className="portions-input-inline">
+            <label htmlFor="portions">Servings:</label>
             <input
               id="portions"
               type="text"
@@ -358,21 +352,7 @@ export function PasteRecipe() {
               onChange={(e) => setPortions(e.target.value)}
             />
           </div>
-        )}
 
-        {portions && !showPortionsInput && (
-          <div className="detected-portions">
-            Detected portions: <strong>{portions}</strong>
-            <button
-              className="edit-portions-btn"
-              onClick={() => setShowPortionsInput(true)}
-            >
-              Edit
-            </button>
-          </div>
-        )}
-
-        <div className="paste-actions">
           <button
             className="assess-btn"
             onClick={handleAssess}
@@ -380,13 +360,13 @@ export function PasteRecipe() {
           >
             {isAssessing ? 'Analyzing...' : 'Analyze Nutrition'}
           </button>
-
-          {recipeText && (
-            <button className="clear-paste-btn" onClick={handleClear}>
-              Clear
-            </button>
-          )}
         </div>
+
+        {(recipeText || recipeImage) && (
+          <button className="clear-paste-btn" onClick={handleClear}>
+            Clear
+          </button>
+        )}
 
         {!config.openaiApiKey && (
           <p className="config-warning">Configure OpenAI API key in Settings first</p>
