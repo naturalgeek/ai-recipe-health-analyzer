@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, '..', 'public');
 
-const sizes = [192, 512];
+const sizes = [180, 192, 512]; // 180 is for iOS apple-touch-icon
 
 async function generateIcons() {
   const svgBuffer = readFileSync(join(publicDir, 'icon.svg'));
