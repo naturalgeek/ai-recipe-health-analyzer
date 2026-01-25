@@ -144,7 +144,9 @@ export async function getConfig(): Promise<AppConfig> {
     request.onsuccess = () => {
       const result = request.result;
       resolve({
-        openaiApiKey: result?.openaiApiKey || ''
+        openaiApiKey: result?.openaiApiKey || '',
+        systemPrompt: result?.systemPrompt || '',
+        dietaryRequirements: result?.dietaryRequirements || ''
       });
     };
     request.onerror = () => reject(request.error);
