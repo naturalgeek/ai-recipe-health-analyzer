@@ -76,7 +76,7 @@ export function Settings() {
         </div>
 
         <div className="dietary-input">
-          <label htmlFor="dietaryRequirements">Dietary Requirements</label>
+          <label htmlFor="dietaryRequirements">Personal Dietary Requirements</label>
           <textarea
             id="dietaryRequirements"
             value={dietaryRequirements}
