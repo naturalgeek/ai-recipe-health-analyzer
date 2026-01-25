@@ -78,8 +78,8 @@ export function InstallPrompt() {
         </div>
       )}
 
-      {/* Simple banner hint */}
-      {!showFullPrompt && (
+      {/* Simple banner hint - only on mobile */}
+      {showBanner && !showFullPrompt && (
         <div className="install-banner">
           <span className="install-banner-text">
             Add to Home Screen for the best experience
