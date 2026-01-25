@@ -152,6 +152,11 @@ body {
   margin-top: 0.5rem;
 }
 
+.progress-message.success {
+  color: #4caf50;
+  font-weight: 500;
+}
+
 .success-message {
   margin-top: 1rem;
   padding: 0.75rem;
@@ -166,6 +171,19 @@ body {
   background: #ffebee;
   color: var(--error-color);
   border-radius: 4px;
+}
+
+.global-error {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 1rem;
+  background: #ffebee;
+  color: var(--error-color);
+  text-align: center;
+  z-index: 100;
+  border-bottom: 1px solid var(--error-color);
 }
 
 .clear-btn {

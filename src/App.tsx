@@ -15,7 +15,7 @@ type SidebarView = 'recipes' | 'ingredients';
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('recipes');
   const [sidebarView, setSidebarView] = useState<SidebarView>('recipes');
-  const { isLoading, recipes } = useApp();
+  const { isLoading, recipes, error } = useApp();
 
   if (isLoading) {
     return (
@@ -29,6 +29,11 @@ function AppContent() {
   return (
     <div className="app">
       <InstallPrompt />
+      {error && (
+        <div className="global-error">
+          {error}
+        </div>
+      )}
       <header className="app-header">
         <h1>AI Recipe Analyzer</h1>
         <nav className="app-nav">

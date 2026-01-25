@@ -21,9 +21,12 @@ export function FileUpload() {
     setProgress({ stage: 'reading', current: 0, total: 100, message: 'Starting import...' });
 
     try {
+      console.log('Starting import of:', file.name, 'Size:', file.size);
       const importedRecipes = await importRecipeKeeperZip(file, setProgress);
+      console.log('Import complete. Recipes:', importedRecipes.length);
       setRecipes(importedRecipes);
     } catch (err) {
+      console.error('Import failed:', err);
       setError(err instanceof Error ? err.message : 'Import failed');
       setProgress(null);
     }
@@ -81,7 +84,7 @@ export function FileUpload() {
         </p>
       </div>
 
-      {progress && progress.stage !== 'done' && (
+      {progress && (
         <div className="progress-section">
           <div className="progress-bar">
             <div
@@ -89,12 +92,10 @@ export function FileUpload() {
               style={{ width: `${(progress.current / progress.total) * 100}%` }}
             />
           </div>
-          <p className="progress-message">{progress.message}</p>
+          <p className={`progress-message ${progress.stage === 'done' ? 'success' : ''}`}>
+            {progress.message}
+          </p>
         </div>
-      )}
-
-      {progress?.stage === 'done' && (
-        <div className="success-message">{progress.message}</div>
       )}
 
       {error && <div className="error-message">{error}</div>}
