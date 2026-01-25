@@ -1151,6 +1151,22 @@ body {
   flex: 1;
 }
 
+.clear-btn-inline {
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.clear-btn-inline:hover {
+  background: var(--bg-color);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
 .clear-paste-btn {
   margin-top: 0.75rem;
   padding: 0.5rem 1rem;

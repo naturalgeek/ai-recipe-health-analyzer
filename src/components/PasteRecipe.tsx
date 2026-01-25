@@ -360,13 +360,13 @@ export function PasteRecipe() {
           >
             {isAssessing ? 'Analyzing...' : 'Analyze Nutrition'}
           </button>
-        </div>
 
-        {(recipeText || recipeImage) && (
-          <button className="clear-paste-btn" onClick={handleClear}>
-            Clear
-          </button>
-        )}
+          {(recipeText || recipeImage || recipeUrl || parsedRecipe || assessment) && (
+            <button className="clear-btn-inline" onClick={handleClear}>
+              Clear
+            </button>
+          )}
+        </div>
 
         {!config.openaiApiKey && (
           <p className="config-warning">Configure OpenAI API key in Settings first</p>
