@@ -44,6 +44,34 @@
             });
         });
       }
+
+      // Auto-update: check for new version every 30 seconds
+      (function() {
+        var currentBuildTime = null;
+        var checkInterval = 30000; // 30 seconds
+
+        function checkForUpdate() {
+          fetch('/ai-recipe-health-analyzer/version.json?t=' + Date.now())
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              if (currentBuildTime === null) {
+                currentBuildTime = data.buildTime;
+                console.log('App version:', data.version, 'Build:', new Date(data.buildTime).toISOString());
+              } else if (data.buildTime !== currentBuildTime) {
+                console.log('New version detected, reloading...');
+                window.location.reload();
+              }
+            })
+            .catch(function(err) {
+              console.log('Version check failed:', err);
+            });
+        }
+
+        // Initial check after app loads
+        setTimeout(checkForUpdate, 2000);
+        // Periodic checks
+        setInterval(checkForUpdate, checkInterval);
+      })();
     </script>
   </body>
 </html>
