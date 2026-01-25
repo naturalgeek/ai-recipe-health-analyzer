@@ -11,7 +11,7 @@ A Progressive Web App that provides AI-powered nutritional assessment for your r
   - Paste recipe text directly
   - Fetch recipe from any URL
   - Upload a photo of a dish or recipe
-- **AI-Powered Analysis** - Get detailed nutritional information per serving using OpenAI's GPT-4o
+- **AI-Powered Analysis** - Get detailed nutritional information per serving using OpenAI's GPT-5.2
 - **Image Analysis** - Upload a photo and AI will identify the dish and estimate nutrition
 - **Health Score** - Each recipe receives a 1-10 health score with benefits and warnings
 - **Ingredient Search** - Browse recipes by ingredient
@@ -103,7 +103,7 @@ npm run lint     # Run ESLint
 - PWA (Service Worker + Web App Manifest)
 - IndexedDB for local storage
 - JSZip for recipe import
-- OpenAI API (GPT-4o with vision) for nutritional analysis
+- OpenAI API (GPT-5.2 with vision) for nutritional analysis
 - Sharp for icon generation
 
 ## License

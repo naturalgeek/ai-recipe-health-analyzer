@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI Recipe Analyzer is a Progressive Web App (PWA) that provides AI-powered nutritional assessment for recipes. It supports multiple input methods: RecipeKeeper .zip import, pasted text, URL fetching, and photo upload. All data is stored locally in IndexedDB. Uses OpenAI GPT-4o (with vision) for analysis.
+AI Recipe Analyzer is a Progressive Web App (PWA) that provides AI-powered nutritional assessment for recipes. It supports multiple input methods: RecipeKeeper .zip import, pasted text, URL fetching, and photo upload. All data is stored locally in IndexedDB. Uses OpenAI GPT-5.2 (with vision) for analysis.
 
 ## Commands
 
@@ -21,7 +21,7 @@ npm run preview  # Preview production build locally
 
 1. **Import**: User uploads RecipeKeeper .zip → `zipImport.ts` extracts with JSZip → `recipeParser.ts` parses HTML → `storage.ts` saves to IndexedDB
 2. **Quick Assess (Text)**: User pastes text or fetches URL → `PasteRecipe.tsx` detects portions → `openai.ts` assesses
-3. **Quick Assess (Image)**: User uploads photo → `openai.ts` uses GPT-4o vision to analyze
+3. **Quick Assess (Image)**: User uploads photo → `openai.ts` uses GPT-5.2 vision to analyze
 4. **Display**: `AppContext.tsx` loads from IndexedDB → components render recipes
 5. **Assessment**: User clicks assess → `openai.ts` calls GPT API → result saved to IndexedDB
 
@@ -30,7 +30,7 @@ npm run preview  # Preview production build locally
 - **zipImport.ts**: Extracts .zip, loads images as base64, orchestrates import
 - **recipeParser.ts**: Parses RecipeKeeper HTML format using DOMParser
 - **storage.ts**: IndexedDB wrapper with stores for `recipes`, `assessments`, `config`
-- **openai.ts**: Nutritional analysis via GPT-4o, supports both text and image (vision) analysis
+- **openai.ts**: Nutritional analysis via GPT-5.2, supports both text and image (vision) analysis
 
 ### Key Components (`src/components/`)
 
