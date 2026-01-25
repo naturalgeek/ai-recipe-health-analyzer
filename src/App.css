@@ -29,6 +29,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  max-width: 100vw;
 }
 
 /* Header */
@@ -1519,6 +1520,56 @@ body {
   .nav-btn {
     padding: 0.4rem 0.75rem;
     font-size: 0.875rem;
+  }
+
+  /* Fix horizontal overflow on mobile */
+  .paste-recipe {
+    padding: 1rem;
+    overflow-x: hidden;
+  }
+
+  .paste-recipe-input {
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .url-input-group {
+    flex-direction: column;
+  }
+
+  .url-field {
+    width: 100%;
+  }
+
+  .fetch-btn {
+    width: 100%;
+  }
+
+  .action-row {
+    flex-wrap: wrap;
+  }
+
+  .portions-input-inline {
+    flex: 1 1 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-row .assess-btn {
+    flex: 1 1 auto;
+  }
+
+  .clear-btn-inline {
+    flex: 0 0 auto;
+  }
+
+  .paste-assessment {
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .detected-dish h4 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .recipes-layout {
