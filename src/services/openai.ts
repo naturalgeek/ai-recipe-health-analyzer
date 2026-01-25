@@ -1,6 +1,6 @@
 import type { Recipe, NutritionalAssessment } from '../types/recipe';
 
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 
 const SYSTEM_PROMPT = `You are a professional nutritionist and dietitian. Analyze recipes and provide accurate nutritional information per serving.
 Always respond with valid JSON in the exact format specified. Be precise with your estimates based on standard nutritional databases.
@@ -43,7 +43,14 @@ const IMAGE_JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the foll
 }`;
 
 function parseAssessmentResponse(content: string, recipeId: string): NutritionalAssessment {
-  const parsed = JSON.parse(content);
+  // Try to extract JSON from the response (may have markdown code blocks)
+  let jsonContent = content;
+  const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonContent = jsonMatch[1].trim();
+  }
+
+  const parsed = JSON.parse(jsonContent);
 
   return {
     recipeId,
@@ -68,7 +75,47 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
   };
 }
 
-const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
+async function callResponsesAPI(
+  apiKey: string,
+  input: string | Array<{ type: string; text?: string; image_url?: string }>,
+  instructions?: string
+): Promise<string> {
+  const body: Record<string, unknown> = {
+    model: 'gpt-5.2',
+    input
+  };
+
+  if (instructions) {
+    body.instructions = instructions;
+  }
+
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Find the message output in the response array
+  const messageOutput = data.output?.find((item: { type: string }) => item.type === 'message');
+  const textContent = messageOutput?.content?.find((c: { type: string }) => c.type === 'output_text');
+  const outputText = textContent?.text;
+
+  if (!outputText) {
+    throw new Error('No response from OpenAI');
+  }
+
+  return outputText;
+}
 
 export async function extractRecipeFromUrl(
   url: string,
@@ -120,25 +167,7 @@ export async function assessImageNutrition(
   portions: string,
   apiKey: string
 ): Promise<NutritionalAssessment> {
-  const response = await fetch(OPENAI_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-5.2',
-      messages: [
-        {
-          role: 'system',
-          content: SYSTEM_PROMPT
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Analyze this image of a dish/recipe and estimate nutritional information per serving.
+  const prompt = `Analyze this image of a dish/recipe and estimate nutritional information per serving.
 
 Number of servings shown: ${portions}
 
@@ -150,36 +179,15 @@ Base your estimates on:
 - Visual portion sizes
 - Typical recipes for this type of dish
 - Standard nutritional databases
-- Be realistic and provide your best estimates`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: imageBase64
-              }
-            }
-          ]
-        }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 1000
-    })
-  });
+- Be realistic and provide your best estimates`;
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
-  }
+  const input = [
+    { type: 'input_text', text: prompt },
+    { type: 'input_image', image_url: imageBase64 }
+  ];
 
-  const data = await response.json();
-  const content = data.choices[0]?.message?.content;
-
-  if (!content) {
-    throw new Error('No response from OpenAI');
-  }
-
-  return parseAssessmentResponse(content, `image-${Date.now()}`);
+  const outputText = await callResponsesAPI(apiKey, input, SYSTEM_PROMPT);
+  return parseAssessmentResponse(outputText, `image-${Date.now()}`);
 }
 
 export async function assessRecipeNutrition(
@@ -187,37 +195,8 @@ export async function assessRecipeNutrition(
   apiKey: string
 ): Promise<NutritionalAssessment> {
   const prompt = buildPrompt(recipe);
-
-  const response = await fetch(OPENAI_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-5.2',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: prompt }
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.3
-    })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const content = data.choices[0]?.message?.content;
-
-  if (!content) {
-    throw new Error('No response from OpenAI');
-  }
-
-  return parseAssessmentResponse(content, recipe.id);
+  const outputText = await callResponsesAPI(apiKey, prompt, SYSTEM_PROMPT);
+  return parseAssessmentResponse(outputText, recipe.id);
 }
 
 function buildPrompt(recipe: Recipe): string {
