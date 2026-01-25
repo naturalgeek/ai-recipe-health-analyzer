@@ -6,6 +6,7 @@ import { RecipeDetail } from './components/RecipeDetail';
 import { Settings } from './components/Settings';
 import { IngredientSearch } from './components/IngredientSearch';
 import { PasteRecipe } from './components/PasteRecipe';
+import { InstallPrompt } from './components/InstallPrompt';
 import './App.css';
 
 type Tab = 'recipes' | 'quick' | 'settings';
@@ -27,8 +28,9 @@ function AppContent() {
 
   return (
     <div className="app">
+      <InstallPrompt />
       <header className="app-header">
-        <h1>RecipeKeeper Assesser</h1>
+        <h1>AI Recipe Analyzer</h1>
         <nav className="app-nav">
           <button
             className={`nav-btn ${activeTab === 'recipes' ? 'active' : ''}`}

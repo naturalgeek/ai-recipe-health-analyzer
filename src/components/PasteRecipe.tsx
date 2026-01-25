@@ -43,25 +43,42 @@ function extractRecipeText(html: string): string {
 }
 
 async function fetchRecipeFromUrl(url: string): Promise<string> {
+  // List of CORS proxies to try
+  const proxies = [
+    (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    (u: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+
   // Try direct fetch first
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { mode: 'cors' });
     if (response.ok) {
       const html = await response.text();
       return extractRecipeText(html);
     }
   } catch {
-    // CORS error, try proxy
+    // CORS error expected, continue with proxies
   }
 
-  // Try with CORS proxy
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-  const response = await fetch(proxyUrl);
-  if (!response.ok) {
-    throw new Error('Failed to fetch recipe. The website may be blocking access.');
+  // Try each proxy
+  for (const getProxyUrl of proxies) {
+    try {
+      const proxyUrl = getProxyUrl(url);
+      const response = await fetch(proxyUrl);
+      if (response.ok) {
+        const html = await response.text();
+        const text = extractRecipeText(html);
+        if (text.length > 100) {
+          return text;
+        }
+      }
+    } catch {
+      // Try next proxy
+    }
   }
-  const html = await response.text();
-  return extractRecipeText(html);
+
+  throw new Error('Could not fetch recipe. Try copying and pasting the recipe text instead.');
 }
 
 function detectPortions(text: string): string | null {

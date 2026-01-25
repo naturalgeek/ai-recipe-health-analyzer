@@ -2,11 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RecipeKeeper Assesser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>AI Recipe Analyzer</title>
+    <meta name="description" content="AI-powered nutritional assessment for your recipes" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/ai-recipe-health-analyzer/manifest.json" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#d24400" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/ai-recipe-health-analyzer/icon.svg" />
+    <link rel="apple-touch-icon" href="/ai-recipe-health-analyzer/icon-192.png" />
+
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AI Recipe Analyzer" />
+
+    <!-- Android PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Prevent phone number detection -->
+    <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/ai-recipe-health-analyzer/sw.js')
+            .then((registration) => {
+              console.log('SW registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('SW registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
