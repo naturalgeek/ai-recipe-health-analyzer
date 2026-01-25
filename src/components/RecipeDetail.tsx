@@ -160,7 +160,7 @@ function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }
             <span className="score-value">{dietScore}</span>
             <span className="score-label">/10</span>
           </div>
-          <span className="score-text">Diet Score</span>
+          <span className="score-text">Personal Diet Score</span>
         </div>
       </div>
 

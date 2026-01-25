@@ -29,7 +29,7 @@ const JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the following 
     "sodium": <number in mg>
   },
   "healthScore": <number 1-10, where 10 is healthiest>,
-  "dietScore": <number 1-10, where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
+  "dietScore": <number 1-10, personal diet score where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
   "healthNotes": [<array of brief observations about the nutritional profile>],
   "warnings": [<array of any health concerns, dietary conflicts, or high values to be aware of>],
   "benefits": [<array of health benefits of this recipe>]
@@ -49,7 +49,7 @@ const IMAGE_JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the foll
     "sodium": <number in mg>
   },
   "healthScore": <number 1-10, where 10 is healthiest>,
-  "dietScore": <number 1-10, where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
+  "dietScore": <number 1-10, personal diet score where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
   "healthNotes": [<array of brief observations about the nutritional profile>],
   "warnings": [<array of any health concerns, dietary conflicts, or high values to be aware of>],
   "benefits": [<array of health benefits of this recipe>]
