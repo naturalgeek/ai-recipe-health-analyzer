@@ -91,7 +91,7 @@ async function callResponsesAPI(
   }
 
   if (maxCompletionTokens) {
-    body.max_completion_tokens = maxCompletionTokens;
+    body.max_output_tokens = maxCompletionTokens;
   }
 
   const response = await fetch(OPENAI_RESPONSES_URL, {
