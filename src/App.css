@@ -390,6 +390,26 @@ body {
   margin: 1rem 0;
   font-size: 0.875rem;
   color: var(--text-muted);
+  align-items: center;
+}
+
+.servings-input-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portions-field-small {
+  width: 60px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.portions-field-small:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .recipe-source {

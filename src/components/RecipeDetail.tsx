@@ -1,9 +1,17 @@
+import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatPrepTime } from '../services/recipeParser';
 import type { NutritionalAssessment } from '../types/recipe';
 
 export function RecipeDetail() {
   const { selectedRecipe, assessment, isAssessing, assessRecipe, config, error, setError } = useApp();
+  const [portions, setPortions] = useState('');
+
+  useEffect(() => {
+    if (selectedRecipe) {
+      setPortions(selectedRecipe.yield || '');
+    }
+  }, [selectedRecipe]);
 
   if (!selectedRecipe) {
     return (
@@ -19,8 +27,15 @@ export function RecipeDetail() {
       return;
     }
 
+    if (!portions.trim()) {
+      setError('Please enter the number of servings');
+      return;
+    }
+
     try {
-      await assessRecipe(selectedRecipe);
+      // Create a copy of the recipe with the updated yield
+      const recipeWithPortions = { ...selectedRecipe, yield: portions.trim() };
+      await assessRecipe(recipeWithPortions);
     } catch (err) {
       // Error is already handled in context
     }
@@ -46,7 +61,16 @@ export function RecipeDetail() {
             </div>
           )}
           <div className="recipe-meta">
-            {selectedRecipe.yield && <span>Servings: {selectedRecipe.yield}</span>}
+            <span className="servings-input-inline">
+              Servings:
+              <input
+                type="text"
+                value={portions}
+                onChange={(e) => setPortions(e.target.value)}
+                placeholder="e.g., 4"
+                className="portions-field-small"
+              />
+            </span>
             {selectedRecipe.prepTime && formatPrepTime(selectedRecipe.prepTime) && (
               <span>Prep: {formatPrepTime(selectedRecipe.prepTime)}</span>
             )}
@@ -106,12 +130,15 @@ export function RecipeDetail() {
             <button
               className="assess-btn"
               onClick={handleAssess}
-              disabled={!config.openaiApiKey}
+              disabled={!config.openaiApiKey || !portions.trim()}
             >
               Analyze Nutrition
             </button>
             {!config.openaiApiKey && (
               <p className="config-warning">Configure OpenAI API key in Settings first</p>
+            )}
+            {!portions.trim() && (
+              <p className="config-warning">Enter servings above to analyze</p>
             )}
           </div>
         )}
@@ -128,7 +155,7 @@ export function RecipeDetail() {
             <button
               className="reanalyze-btn"
               onClick={handleAssess}
-              disabled={!config.openaiApiKey}
+              disabled={!config.openaiApiKey || !portions.trim()}
             >
               Re-analyze
             </button>
