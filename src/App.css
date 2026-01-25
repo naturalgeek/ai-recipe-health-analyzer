@@ -582,8 +582,10 @@ body {
 /* Settings */
 .settings-container {
   max-width: 600px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 0 auto;
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .settings-container h2 {
@@ -891,8 +893,10 @@ body {
 /* Paste Recipe */
 .paste-recipe {
   max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 0 auto;
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .paste-recipe-input {
