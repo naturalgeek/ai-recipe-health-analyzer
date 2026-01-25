@@ -24,6 +24,7 @@ export function InstallPrompt() {
 
   const isiOS = isIOS();
   const isAndroidDevice = isAndroid();
+  const isMobileDevice = isMobile();
 
   useEffect(() => {
     const dismissed = localStorage.getItem('install-prompt-dismissed');
@@ -79,7 +80,7 @@ export function InstallPrompt() {
       )}
 
       {/* Simple banner hint - only on mobile */}
-      {showBanner && !showFullPrompt && (
+      {showBanner && !showFullPrompt && isMobileDevice && (
         <div className="install-banner">
           <span className="install-banner-text">
             Add to Home Screen for the best experience
@@ -93,8 +94,8 @@ export function InstallPrompt() {
         </div>
       )}
 
-      {/* Full instructions overlay */}
-      {showFullPrompt && (
+      {/* Full instructions overlay - only on mobile */}
+      {showFullPrompt && isMobileDevice && (
         <div className="install-prompt-overlay">
           <div className="install-prompt">
             <div className="install-prompt-header">
