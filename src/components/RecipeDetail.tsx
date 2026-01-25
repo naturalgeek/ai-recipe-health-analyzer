@@ -123,7 +123,18 @@ export function RecipeDetail() {
           </div>
         )}
 
-        {assessment && <AssessmentDisplay assessment={assessment} />}
+        {assessment && !isAssessing && (
+          <>
+            <AssessmentDisplay assessment={assessment} />
+            <button
+              className="reanalyze-btn"
+              onClick={handleAssess}
+              disabled={!config.openaiApiKey}
+            >
+              Re-analyze
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

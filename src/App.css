@@ -609,6 +609,26 @@ body {
   text-align: right;
 }
 
+.reanalyze-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.reanalyze-btn:hover:not(:disabled) {
+  background: var(--border-color);
+}
+
+.reanalyze-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Settings */
 .settings-container {
   max-width: 600px;
