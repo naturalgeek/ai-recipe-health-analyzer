@@ -1,21 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { DEFAULT_SYSTEM_PROMPT } from '../services/openai';
 
 export function Settings() {
   const { config, updateConfig } = useApp();
   const [apiKey, setApiKey] = useState(config.openaiApiKey);
+  const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt || '');
+  const [dietaryRequirements, setDietaryRequirements] = useState(config.dietaryRequirements || 'I tolerate all foods');
   const [saved, setSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     setApiKey(config.openaiApiKey);
-  }, [config.openaiApiKey]);
+    setSystemPrompt(config.systemPrompt || '');
+    setDietaryRequirements(config.dietaryRequirements || 'I tolerate all foods');
+  }, [config.openaiApiKey, config.systemPrompt, config.dietaryRequirements]);
 
   const handleSave = async () => {
-    await updateConfig({ openaiApiKey: apiKey });
+    await updateConfig({
+      openaiApiKey: apiKey,
+      systemPrompt: systemPrompt,
+      dietaryRequirements: dietaryRequirements
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  const hasChanges = apiKey !== config.openaiApiKey ||
+    systemPrompt !== (config.systemPrompt || '') ||
+    dietaryRequirements !== (config.dietaryRequirements || 'I tolerate all foods');
 
   const maskedKey = apiKey
     ? apiKey.substring(0, 7) + '...' + apiKey.substring(apiKey.length - 4)
@@ -56,12 +69,42 @@ export function Settings() {
           )}
         </div>
 
+        <div className="dietary-input">
+          <label htmlFor="dietaryRequirements">Dietary Requirements</label>
+          <textarea
+            id="dietaryRequirements"
+            value={dietaryRequirements}
+            onChange={(e) => setDietaryRequirements(e.target.value)}
+            placeholder="e.g., I am lactose intolerant, allergic to nuts..."
+            className="dietary-field"
+            rows={2}
+          />
+          <p className="settings-hint">
+            Describe any allergies, intolerances, or dietary preferences. This will be included in the nutritional analysis.
+          </p>
+        </div>
+
+        <div className="system-prompt-input">
+          <label htmlFor="systemPrompt">Custom System Prompt (Advanced)</label>
+          <textarea
+            id="systemPrompt"
+            value={systemPrompt}
+            onChange={(e) => setSystemPrompt(e.target.value)}
+            placeholder={DEFAULT_SYSTEM_PROMPT}
+            className="system-prompt-field"
+            rows={4}
+          />
+          <p className="settings-hint">
+            Leave empty to use the default prompt. This defines how the AI analyzes recipes.
+          </p>
+        </div>
+
         <button
           className="save-btn"
           onClick={handleSave}
-          disabled={apiKey === config.openaiApiKey}
+          disabled={!hasChanges}
         >
-          {saved ? 'Saved!' : 'Save API Key'}
+          {saved ? 'Saved!' : 'Save Settings'}
         </button>
 
         <div className="api-help">

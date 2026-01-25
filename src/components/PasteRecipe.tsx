@@ -240,10 +240,10 @@ export function PasteRecipe() {
       let result: NutritionalAssessment;
 
       if (hasImage) {
-        result = await assessImageNutrition(recipeImage, portions, config.openaiApiKey);
+        result = await assessImageNutrition(recipeImage, portions, config);
       } else {
         const recipe = parseRecipeText(recipeText, portions);
-        result = await assessRecipeNutrition(recipe, config.openaiApiKey);
+        result = await assessRecipeNutrition(recipe, config);
       }
 
       setAssessment(result);

@@ -31,7 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     recipes: [],
     selectedRecipe: null,
     assessment: null,
-    config: { openaiApiKey: '' },
+    config: { openaiApiKey: '', systemPrompt: '', dietaryRequirements: 'I tolerate all foods' },
     isLoading: true,
     isAssessing: false,
     error: null
@@ -92,7 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState(s => ({ ...s, isAssessing: true, error: null }));
 
     try {
-      const assessment = await assessRecipeNutrition(recipe, state.config.openaiApiKey);
+      const assessment = await assessRecipeNutrition(recipe, state.config);
       await saveAssessment(assessment);
       setState(s => ({ ...s, assessment, isAssessing: false }));
       return assessment;
@@ -101,7 +101,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setState(s => ({ ...s, isAssessing: false, error: message }));
       throw error;
     }
-  }, [state.config.openaiApiKey]);
+  }, [state.config]);
 
   const clearData = useCallback(async () => {
     await clearAllData();

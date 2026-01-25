@@ -1,10 +1,21 @@
-import type { Recipe, NutritionalAssessment } from '../types/recipe';
+import type { Recipe, NutritionalAssessment, AppConfig } from '../types/recipe';
 
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 
-const SYSTEM_PROMPT = `You are a professional nutritionist and dietitian. Analyze recipes and provide accurate nutritional information per serving.
+export const DEFAULT_SYSTEM_PROMPT = `You are a professional nutritionist and dietitian. Analyze recipes and provide accurate nutritional information per serving.
 Always respond with valid JSON in the exact format specified. Be precise with your estimates based on standard nutritional databases.
 Consider cooking methods and their effects on nutrition.`;
+
+function getSystemPrompt(config: AppConfig): string {
+  const basePrompt = config.systemPrompt?.trim() || DEFAULT_SYSTEM_PROMPT;
+  const dietary = config.dietaryRequirements?.trim();
+
+  if (dietary && dietary.toLowerCase() !== 'i tolerate all foods') {
+    return `${basePrompt}\n\nUser dietary information: ${dietary}. Please highlight any ingredients or aspects of the recipe that may be relevant to these dietary requirements in the warnings section.`;
+  }
+
+  return basePrompt;
+}
 
 const JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the following JSON format:
 {
@@ -170,7 +181,7 @@ Format as clean, readable text suitable for nutritional analysis.`,
 export async function assessImageNutrition(
   imageBase64: string,
   portions: string,
-  apiKey: string
+  config: AppConfig
 ): Promise<NutritionalAssessment> {
   const prompt = `Analyze this image of a dish/recipe and estimate nutritional information per serving.
 
@@ -198,16 +209,18 @@ Base your estimates on:
     }
   ];
 
-  const outputText = await callResponsesAPI(apiKey, input, SYSTEM_PROMPT, 2000);
+  const systemPrompt = getSystemPrompt(config);
+  const outputText = await callResponsesAPI(config.openaiApiKey, input, systemPrompt, 2000);
   return parseAssessmentResponse(outputText, `image-${Date.now()}`);
 }
 
 export async function assessRecipeNutrition(
   recipe: Recipe,
-  apiKey: string
+  config: AppConfig
 ): Promise<NutritionalAssessment> {
   const prompt = buildPrompt(recipe);
-  const outputText = await callResponsesAPI(apiKey, prompt, SYSTEM_PROMPT);
+  const systemPrompt = getSystemPrompt(config);
+  const outputText = await callResponsesAPI(config.openaiApiKey, prompt, systemPrompt);
   return parseAssessmentResponse(outputText, recipe.id);
 }
 

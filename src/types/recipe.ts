@@ -42,4 +42,6 @@ export interface NutritionalAssessment {
 
 export interface AppConfig {
   openaiApiKey: string;
+  systemPrompt?: string;
+  dietaryRequirements?: string;
 }
