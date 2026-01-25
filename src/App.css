@@ -1690,6 +1690,62 @@ body {
   opacity: 1;
 }
 
+/* Desktop iOS Toast */
+.desktop-ios-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 320px;
+  z-index: 100;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.toast-text {
+  font-size: 0.8rem;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.toast-close:hover {
+  color: var(--text-color);
+}
+
 /* Install Prompt Overlay */
 .install-prompt-overlay {
   position: fixed;

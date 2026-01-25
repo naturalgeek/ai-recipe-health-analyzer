@@ -9,16 +9,29 @@ function isInStandaloneMode(): boolean {
     window.matchMedia('(display-mode: standalone)').matches;
 }
 
+function isMobile(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 export function InstallPrompt() {
   const [showBanner, setShowBanner] = useState(false);
   const [showFullPrompt, setShowFullPrompt] = useState(false);
+  const [showDesktopToast, setShowDesktopToast] = useState(false);
 
   useEffect(() => {
     // Check if iOS Safari and not already installed
     const dismissed = localStorage.getItem('install-prompt-dismissed');
+    const desktopDismissed = localStorage.getItem('desktop-ios-toast-dismissed');
+
     if (isIOS() && !isInStandaloneMode() && !dismissed) {
       // Show banner after a short delay
       const timer = setTimeout(() => setShowBanner(true), 1500);
+      return () => clearTimeout(timer);
+    }
+
+    // Show desktop toast for non-mobile users
+    if (!isMobile() && !isInStandaloneMode() && !desktopDismissed) {
+      const timer = setTimeout(() => setShowDesktopToast(true), 3000);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -29,6 +42,11 @@ export function InstallPrompt() {
     localStorage.setItem('install-prompt-dismissed', 'true');
   };
 
+  const handleDismissDesktopToast = () => {
+    setShowDesktopToast(false);
+    localStorage.setItem('desktop-ios-toast-dismissed', 'true');
+  };
+
   const handleShowInstructions = () => {
     setShowFullPrompt(true);
   };
@@ -37,10 +55,23 @@ export function InstallPrompt() {
     setShowFullPrompt(false);
   };
 
-  if (!showBanner) return null;
+  if (!showBanner && !showDesktopToast) return null;
 
   return (
     <>
+      {/* Desktop toast for iOS app promotion */}
+      {showDesktopToast && (
+        <div className="desktop-ios-toast">
+          <span className="toast-icon">📱</span>
+          <span className="toast-text">
+            Also available as an iOS app! Open on your iPhone and add to Home Screen.
+          </span>
+          <button className="toast-close" onClick={handleDismissDesktopToast}>
+            &times;
+          </button>
+        </div>
+      )}
+
       {/* Simple banner hint */}
       {!showFullPrompt && (
         <div className="install-banner">
