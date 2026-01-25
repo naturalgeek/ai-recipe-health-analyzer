@@ -29,8 +29,9 @@ const JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the following 
     "sodium": <number in mg>
   },
   "healthScore": <number 1-10, where 10 is healthiest>,
+  "dietScore": <number 1-10, where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
   "healthNotes": [<array of brief observations about the nutritional profile>],
-  "warnings": [<array of any health concerns or high values to be aware of>],
+  "warnings": [<array of any health concerns, dietary conflicts, or high values to be aware of>],
   "benefits": [<array of health benefits of this recipe>]
 }`;
 
@@ -48,8 +49,9 @@ const IMAGE_JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the foll
     "sodium": <number in mg>
   },
   "healthScore": <number 1-10, where 10 is healthiest>,
+  "dietScore": <number 1-10, where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
   "healthNotes": [<array of brief observations about the nutritional profile>],
-  "warnings": [<array of any health concerns or high values to be aware of>],
+  "warnings": [<array of any health concerns, dietary conflicts, or high values to be aware of>],
   "benefits": [<array of health benefits of this recipe>]
 }`;
 
@@ -76,6 +78,7 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
       sodium: parsed.perServing.sodium || 0
     },
     healthScore: parsed.healthScore || 5,
+    dietScore: parsed.dietScore || 10,
     healthNotes: parsed.healthNotes || [],
     warnings: parsed.warnings || [],
     benefits: parsed.benefits || [],

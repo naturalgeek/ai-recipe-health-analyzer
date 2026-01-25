@@ -130,9 +130,9 @@ export function RecipeDetail() {
 }
 
 function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
-  const { perServing, healthScore, healthNotes, warnings, benefits } = assessment;
+  const { perServing, healthScore, dietScore, healthNotes, warnings, benefits } = assessment;
 
-  const getHealthScoreColor = (score: number) => {
+  const getScoreColor = (score: number) => {
     if (score >= 7) return '#4caf50';
     if (score >= 4) return '#ff9800';
     return '#f44336';
@@ -140,15 +140,28 @@ function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }
 
   return (
     <div className="assessment-display">
-      <div className="health-score">
-        <div
-          className="score-circle"
-          style={{ borderColor: getHealthScoreColor(healthScore) }}
-        >
-          <span className="score-value">{healthScore}</span>
-          <span className="score-label">/10</span>
+      <div className="scores-row">
+        <div className="health-score">
+          <div
+            className="score-circle"
+            style={{ borderColor: getScoreColor(healthScore) }}
+          >
+            <span className="score-value">{healthScore}</span>
+            <span className="score-label">/10</span>
+          </div>
+          <span className="score-text">Health Score</span>
         </div>
-        <span className="score-text">Health Score</span>
+
+        <div className="health-score">
+          <div
+            className="score-circle"
+            style={{ borderColor: getScoreColor(dietScore) }}
+          >
+            <span className="score-value">{dietScore}</span>
+            <span className="score-label">/10</span>
+          </div>
+          <span className="score-text">Diet Score</span>
+        </div>
       </div>
 
       <div className="nutrition-grid">

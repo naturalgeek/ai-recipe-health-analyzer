@@ -31,6 +31,7 @@ export interface NutritionalAssessment {
     sodium: number;
   };
   healthScore: number; // 1-10
+  dietScore: number; // 1-10, compliance with dietary requirements
   healthNotes: string[];
   warnings: string[];
   benefits: string[];
