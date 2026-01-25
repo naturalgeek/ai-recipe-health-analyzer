@@ -197,7 +197,10 @@ export async function assessImageNutrition(
   config: AppConfig
 ): Promise<NutritionalAssessment> {
   const dietarySection = getDietarySection(config);
-  const prompt = `Analyze this image of a dish/recipe and estimate nutritional information per serving.
+  const systemPrompt = getSystemPrompt(config);
+  const prompt = `${systemPrompt}
+
+Analyze this image of a dish/recipe and estimate nutritional information per serving.
 
 Number of servings shown: ${portions}
 ${dietarySection}
@@ -223,8 +226,7 @@ Base your estimates on:
     }
   ];
 
-  const systemPrompt = getSystemPrompt(config);
-  const outputText = await callResponsesAPI(config.openaiApiKey, input, systemPrompt, 2000);
+  const outputText = await callResponsesAPI(config.openaiApiKey, input, undefined, 2000);
   return parseAssessmentResponse(outputText, `image-${Date.now()}`, config.dietaryRequirements);
 }
 
@@ -233,8 +235,7 @@ export async function assessRecipeNutrition(
   config: AppConfig
 ): Promise<NutritionalAssessment> {
   const prompt = buildPrompt(recipe, config);
-  const systemPrompt = getSystemPrompt(config);
-  const outputText = await callResponsesAPI(config.openaiApiKey, prompt, systemPrompt);
+  const outputText = await callResponsesAPI(config.openaiApiKey, prompt);
   return parseAssessmentResponse(outputText, recipe.id, config.dietaryRequirements);
 }
 
@@ -242,8 +243,11 @@ function buildPrompt(recipe: Recipe, config: AppConfig): string {
   const servings = recipe.yield || '1';
   const ingredients = recipe.ingredients.join('\n');
   const dietarySection = getDietarySection(config);
+  const systemPrompt = getSystemPrompt(config);
 
-  return `Analyze this recipe and provide nutritional information per serving.
+  return `${systemPrompt}
+
+Analyze this recipe and provide nutritional information per serving.
 
 Recipe: ${recipe.name}
 Servings: ${servings}
