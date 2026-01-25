@@ -167,21 +167,37 @@ export function RecipeDetail() {
   );
 }
 
-function wrapText(text: string, maxLength: number): string[] {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
+function DietaryTooltip({ items }: { items: string[] }) {
+  const [isOpen, setIsOpen] = useState(false);
 
-  for (const word of words) {
-    if (currentLine.length + word.length + 1 <= maxLength) {
-      currentLine = currentLine ? `${currentLine} ${word}` : word;
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
-    }
-  }
-  if (currentLine) lines.push(currentLine);
-  return lines;
+  if (items.length === 0) return null;
+
+  return (
+    <div className="dietary-tooltip-container">
+      <button
+        className="dietary-tooltip-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+        aria-label="View dietary requirements"
+      >
+        ⓘ
+      </button>
+      {isOpen && (
+        <>
+          <div className="dietary-tooltip-backdrop" onClick={() => setIsOpen(false)} />
+          <div className="dietary-tooltip-popover">
+            <div className="dietary-tooltip-arrow" />
+            <ul>
+              {items.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
@@ -212,24 +228,18 @@ function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }
           <span className="score-text">Health Score</span>
         </div>
 
-        <div className="diet-score-section">
-          <div className="health-score">
-            <div
-              className="score-circle"
-              style={{ borderColor: getScoreColor(dietScore) }}
-            >
-              <span className="score-value">{dietScore}</span>
-              <span className="score-label">/10</span>
-            </div>
-            <span className="score-text">Personal Diet Score</span>
+        <div className="health-score">
+          <div
+            className="score-circle"
+            style={{ borderColor: getScoreColor(dietScore) }}
+          >
+            <span className="score-value">{dietScore}</span>
+            <span className="score-label">/10</span>
           </div>
-          {dietaryItems.length > 0 && (
-            <ul className="dietary-items">
-              {dietaryItems.map((item, i) => (
-                <li key={i}>{wrapText(item, 60).join('\n')}</li>
-              ))}
-            </ul>
-          )}
+          <span className="score-text">
+            Personal Diet Score
+            <DietaryTooltip items={dietaryItems} />
+          </span>
         </div>
       </div>
 
