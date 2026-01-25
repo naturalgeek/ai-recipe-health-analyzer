@@ -518,6 +518,24 @@ body {
   flex-wrap: wrap;
 }
 
+.diet-score-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dietary-items {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.dietary-items li {
+  margin-bottom: 0.25rem;
+}
+
 .health-score {
   display: flex;
   flex-direction: column;
@@ -610,7 +628,7 @@ body {
 }
 
 .reanalyze-btn {
-  margin-top: 1rem;
+  margin-bottom: 1rem;
   padding: 0.5rem 1rem;
   background: var(--bg-color);
   border: 1px solid var(--border-color);

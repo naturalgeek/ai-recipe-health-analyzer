@@ -125,7 +125,6 @@ export function RecipeDetail() {
 
         {assessment && !isAssessing && (
           <>
-            <AssessmentDisplay assessment={assessment} />
             <button
               className="reanalyze-btn"
               onClick={handleAssess}
@@ -133,6 +132,7 @@ export function RecipeDetail() {
             >
               Re-analyze
             </button>
+            <AssessmentDisplay assessment={assessment} />
           </>
         )}
       </div>
@@ -141,7 +141,14 @@ export function RecipeDetail() {
 }
 
 function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
+  const { config } = useApp();
   const { perServing, healthScore, dietScore, healthNotes, warnings, benefits } = assessment;
+
+  const dietaryRequirements = config.dietaryRequirements?.trim();
+  const hasDietaryRequirements = dietaryRequirements && dietaryRequirements.toLowerCase() !== 'i tolerate all foods';
+  const dietaryItems = hasDietaryRequirements
+    ? dietaryRequirements.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
+    : [];
 
   const getScoreColor = (score: number) => {
     if (score >= 7) return '#4caf50';
@@ -163,15 +170,24 @@ function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }
           <span className="score-text">Health Score</span>
         </div>
 
-        <div className="health-score">
-          <div
-            className="score-circle"
-            style={{ borderColor: getScoreColor(dietScore) }}
-          >
-            <span className="score-value">{dietScore}</span>
-            <span className="score-label">/10</span>
+        <div className="diet-score-section">
+          <div className="health-score">
+            <div
+              className="score-circle"
+              style={{ borderColor: getScoreColor(dietScore) }}
+            >
+              <span className="score-value">{dietScore}</span>
+              <span className="score-label">/10</span>
+            </div>
+            <span className="score-text">Personal Diet Score</span>
           </div>
-          <span className="score-text">Personal Diet Score</span>
+          {dietaryItems.length > 0 && (
+            <ul className="dietary-items">
+              {dietaryItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
