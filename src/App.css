@@ -1238,7 +1238,65 @@ body {
   }
 }
 
-/* Install Prompt */
+/* Install Banner (iOS Safari hint) */
+.install-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--primary-color);
+  color: white;
+  padding: 0.625rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  z-index: 1001;
+  font-size: 0.875rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.install-banner-text {
+  flex: 1;
+  text-align: center;
+}
+
+.install-banner-btn {
+  background: white;
+  color: var(--primary-color);
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.install-banner-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.install-banner-close:hover {
+  opacity: 1;
+}
+
+/* Install Prompt Overlay */
 .install-prompt-overlay {
   position: fixed;
   top: 0;
