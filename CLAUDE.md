@@ -30,18 +30,23 @@ npm run preview  # Preview production build locally
 - **zipImport.ts**: Extracts .zip, loads images as base64, orchestrates import
 - **recipeParser.ts**: Parses RecipeKeeper HTML format using DOMParser
 - **storage.ts**: IndexedDB wrapper with stores for `recipes`, `assessments`, `config`
-- **openai.ts**: Nutritional analysis via GPT-5.2, supports both text and image (vision) analysis
+- **openai.ts**: Nutritional analysis via GPT-5.2, supports text and image (vision) analysis. System prompt is embedded directly in the prompt text (not via API `instructions` parameter). Includes dietary requirements in prompt when configured.
 
 ### Key Components (`src/components/`)
 
-- **PasteRecipe.tsx**: Quick assessment with URL fetch, text paste, and image upload
-- **InstallPrompt.tsx**: iOS PWA install guide (detects iOS Safari, shows instructions)
-- **RecipeDetail.tsx**: Recipe display with assessment results
-- **Settings.tsx**: API key configuration with setup tutorial
+- **PasteRecipe.tsx**: Quick assessment with URL fetch, text paste, and image upload. Contains `DietaryTooltip` component.
+- **InstallPrompt.tsx**: PWA install prompts for iOS and Android (mobile banner with instructions), plus desktop toast promoting mobile app
+- **RecipeDetail.tsx**: Recipe display with editable servings, assessment results, re-analyze button. Contains `DietaryTooltip` component.
+- **Settings.tsx**: API key configuration with setup tutorial, personal dietary requirements, custom system prompt
+
+### Assessment Scores
+
+- **Health Score** (1-10): General healthiness of the recipe
+- **Personal Diet Score** (1-10): Compliance with user's dietary requirements (configured in Settings)
 
 ### State Management
 
-Single React Context (`AppContext.tsx`) manages: recipes, selected recipe, assessments, config, loading states.
+Single React Context (`AppContext.tsx`) manages: recipes, selected recipe, assessments, config (API key, dietary requirements, system prompt), loading states.
 
 ### PWA Features (`public/`)
 
@@ -63,4 +68,4 @@ Single React Context (`AppContext.tsx`) manages: recipes, selected recipe, asses
 
 ## URL Fetching
 
-Recipe URL fetching uses multiple CORS proxies as fallbacks (allorigins, corsproxy.io, codetabs). Direct fetch is attempted first.
+Recipe URL fetching uses GPT-5.2 with web_search tool via the Responses API to extract recipe content directly from URLs.
