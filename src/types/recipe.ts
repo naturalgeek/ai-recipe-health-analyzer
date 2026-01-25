@@ -35,6 +35,9 @@ export interface NutritionalAssessment {
   warnings: string[];
   benefits: string[];
   rawResponse: string;
+  // Optional fields for image/URL assessments
+  dishName?: string;
+  detectedIngredients?: string[];
 }
 
 export interface AppConfig {

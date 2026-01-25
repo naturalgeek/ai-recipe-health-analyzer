@@ -23,6 +23,25 @@ const JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the following 
   "benefits": [<array of health benefits of this recipe>]
 }`;
 
+const IMAGE_JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the following JSON format:
+{
+  "dishName": <string - name of the identified dish>,
+  "detectedIngredients": [<array of strings - list of identified ingredients with estimated quantities>],
+  "perServing": {
+    "calories": <number in kcal>,
+    "protein": <number in grams>,
+    "carbohydrates": <number in grams>,
+    "fat": <number in grams>,
+    "fiber": <number in grams>,
+    "sugar": <number in grams>,
+    "sodium": <number in mg>
+  },
+  "healthScore": <number 1-10, where 10 is healthiest>,
+  "healthNotes": [<array of brief observations about the nutritional profile>],
+  "warnings": [<array of any health concerns or high values to be aware of>],
+  "benefits": [<array of health benefits of this recipe>]
+}`;
+
 function parseAssessmentResponse(content: string, recipeId: string): NutritionalAssessment {
   const parsed = JSON.parse(content);
 
@@ -42,7 +61,10 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
     healthNotes: parsed.healthNotes || [],
     warnings: parsed.warnings || [],
     benefits: parsed.benefits || [],
-    rawResponse: content
+    rawResponse: content,
+    // Optional fields for image assessments
+    dishName: parsed.dishName,
+    detectedIngredients: parsed.detectedIngredients
   };
 }
 
@@ -120,9 +142,9 @@ export async function assessImageNutrition(
 
 Number of servings shown: ${portions}
 
-Identify what dish this is, estimate the ingredients and portions visible, then provide nutritional analysis.
+Identify what dish this is, list the ingredients you can detect with estimated quantities, then provide nutritional analysis.
 
-${JSON_FORMAT_INSTRUCTIONS}
+${IMAGE_JSON_FORMAT_INSTRUCTIONS}
 
 Base your estimates on:
 - Visual portion sizes

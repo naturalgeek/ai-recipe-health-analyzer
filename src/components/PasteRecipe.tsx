@@ -3,6 +3,15 @@ import { useApp } from '../context/AppContext';
 import { assessRecipeNutrition, assessImageNutrition, extractRecipeFromUrl } from '../services/openai';
 import type { Recipe, NutritionalAssessment } from '../types/recipe';
 
+interface ParsedRecipe {
+  name: string;
+  servings: string | null;
+  prepTime: string | null;
+  cookTime: string | null;
+  ingredients: string[];
+  instructions: string[];
+}
+
 function detectPortions(text: string): string | null {
   const patterns = [
     /(?:serves?|servings?|portions?|yields?)\s*[:\-]?\s*(\d+(?:\s*-\s*\d+)?)/i,
@@ -18,6 +27,77 @@ function detectPortions(text: string): string | null {
     }
   }
   return null;
+}
+
+function parseRecipeFromText(text: string): ParsedRecipe {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  let name = 'Recipe';
+  let servings: string | null = null;
+  let prepTime: string | null = null;
+  let cookTime: string | null = null;
+  const ingredients: string[] = [];
+  const instructions: string[] = [];
+
+  let section: 'unknown' | 'ingredients' | 'instructions' = 'unknown';
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase();
+
+    // Detect recipe name (usually first line or after "Recipe name:")
+    if (lowerLine.startsWith('recipe name:') || lowerLine.startsWith('recipe:')) {
+      name = line.replace(/^recipe\s*name?:?\s*/i, '').trim();
+      continue;
+    }
+
+    // Detect servings
+    if (lowerLine.includes('serving') || lowerLine.includes('portion') || lowerLine.includes('yield')) {
+      const match = line.match(/(\d+(?:\s*-\s*\d+)?)/);
+      if (match) servings = match[1];
+      continue;
+    }
+
+    // Detect prep time
+    if (lowerLine.includes('prep time')) {
+      prepTime = line.replace(/^prep\s*time:?\s*/i, '').trim();
+      continue;
+    }
+
+    // Detect cook time
+    if (lowerLine.includes('cook time')) {
+      cookTime = line.replace(/^cook\s*time:?\s*/i, '').trim();
+      continue;
+    }
+
+    // Detect section headers
+    if (lowerLine.includes('ingredient')) {
+      section = 'ingredients';
+      continue;
+    }
+    if (lowerLine.includes('instruction') || lowerLine.includes('direction') || lowerLine.includes('step')) {
+      section = 'instructions';
+      continue;
+    }
+
+    // If we haven't found a name yet and this looks like a title
+    if (name === 'Recipe' && lines.indexOf(line) === 0 && !line.match(/^\d/) && line.length < 100) {
+      name = line.replace(/\[.*?\]/g, '').trim();
+      continue;
+    }
+
+    // Add to appropriate section
+    if (section === 'ingredients' && line.length > 0) {
+      // Clean up ingredient line
+      const cleaned = line.replace(/^[-•*]\s*/, '').trim();
+      if (cleaned) ingredients.push(cleaned);
+    } else if (section === 'instructions' && line.length > 0) {
+      // Clean up instruction line
+      const cleaned = line.replace(/^\d+[.)]\s*/, '').trim();
+      if (cleaned) instructions.push(cleaned);
+    }
+  }
+
+  return { name, servings, prepTime, cookTime, ingredients, instructions };
 }
 
 function parseRecipeText(text: string, portions: string): Recipe {
@@ -57,6 +137,7 @@ export function PasteRecipe() {
   const [isFetching, setIsFetching] = useState(false);
   const [assessment, setAssessment] = useState<NutritionalAssessment | null>(null);
   const [recipeImage, setRecipeImage] = useState<string | null>(null);
+  const [parsedRecipe, setParsedRecipe] = useState<ParsedRecipe | null>(null);
 
   const handleFetchUrl = async () => {
     if (!recipeUrl.trim()) {
@@ -74,8 +155,14 @@ export function PasteRecipe() {
 
     try {
       // Use GPT-5.2 Responses API with web_search to extract recipe from URL
-      const recipeText = await extractRecipeFromUrl(recipeUrl, config.openaiApiKey);
-      handleTextChange(recipeText);
+      const extractedText = await extractRecipeFromUrl(recipeUrl, config.openaiApiKey);
+      // Parse the recipe for nice display
+      const parsed = parseRecipeFromText(extractedText);
+      setParsedRecipe(parsed);
+      handleTextChange(extractedText, true);
+      if (parsed.servings) {
+        setPortions(parsed.servings);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to extract recipe');
     } finally {
@@ -102,9 +189,12 @@ export function PasteRecipe() {
     reader.readAsDataURL(file);
   };
 
-  const handleTextChange = (text: string) => {
+  const handleTextChange = (text: string, keepParsed = false) => {
     setRecipeText(text);
     setAssessment(null);
+    if (!keepParsed) {
+      setParsedRecipe(null);
+    }
 
     const detected = detectPortions(text);
     if (detected) {
@@ -164,6 +254,7 @@ export function PasteRecipe() {
     setShowPortionsInput(false);
     setAssessment(null);
     setRecipeImage(null);
+    setParsedRecipe(null);
     setError(null);
   };
 
@@ -205,13 +296,17 @@ export function PasteRecipe() {
           <span>or paste text</span>
         </div>
 
-        <textarea
-          className="recipe-textarea"
-          placeholder="Paste your recipe here (ingredients, instructions, etc.)..."
-          value={recipeText}
-          onChange={(e) => handleTextChange(e.target.value)}
-          rows={10}
-        />
+        {!parsedRecipe ? (
+          <textarea
+            className="recipe-textarea"
+            placeholder="Paste your recipe here (ingredients, instructions, etc.)..."
+            value={recipeText}
+            onChange={(e) => handleTextChange(e.target.value)}
+            rows={10}
+          />
+        ) : (
+          <ParsedRecipeDisplay recipe={parsedRecipe} onEdit={() => setParsedRecipe(null)} />
+        )}
 
         <div className="input-divider">
           <span>or upload a photo</span>
@@ -299,7 +394,7 @@ export function PasteRecipe() {
 }
 
 function PasteAssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
-  const { perServing, healthScore, healthNotes, warnings, benefits } = assessment;
+  const { perServing, healthScore, healthNotes, warnings, benefits, dishName, detectedIngredients } = assessment;
 
   const getHealthScoreColor = (score: number) => {
     if (score >= 7) return '#4caf50';
@@ -310,6 +405,23 @@ function PasteAssessmentDisplay({ assessment }: { assessment: NutritionalAssessm
   return (
     <div className="assessment-display paste-assessment">
       <h3>Nutritional Assessment</h3>
+
+      {dishName && (
+        <div className="detected-dish">
+          <h4>{dishName}</h4>
+        </div>
+      )}
+
+      {detectedIngredients && detectedIngredients.length > 0 && (
+        <div className="detected-ingredients">
+          <h5>Detected Ingredients</h5>
+          <ul>
+            {detectedIngredients.map((ing, i) => (
+              <li key={i}>{ing}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="health-score">
         <div
@@ -374,6 +486,45 @@ function NutrientCard({ label, value, unit }: { label: string; value: number; un
       <span className="nutrient-value">{Math.round(value)}</span>
       <span className="nutrient-unit">{unit}</span>
       <span className="nutrient-label">{label}</span>
+    </div>
+  );
+}
+
+function ParsedRecipeDisplay({ recipe, onEdit }: { recipe: ParsedRecipe; onEdit: () => void }) {
+  return (
+    <div className="parsed-recipe">
+      <div className="parsed-recipe-header">
+        <h4>{recipe.name}</h4>
+        <button className="edit-recipe-btn" onClick={onEdit}>Edit</button>
+      </div>
+
+      <div className="parsed-recipe-meta">
+        {recipe.servings && <span>Servings: {recipe.servings}</span>}
+        {recipe.prepTime && <span>Prep: {recipe.prepTime}</span>}
+        {recipe.cookTime && <span>Cook: {recipe.cookTime}</span>}
+      </div>
+
+      {recipe.ingredients.length > 0 && (
+        <div className="parsed-recipe-ingredients">
+          <h5>Ingredients</h5>
+          <ul>
+            {recipe.ingredients.map((ing, i) => (
+              <li key={i}>{ing}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recipe.instructions.length > 0 && (
+        <div className="parsed-recipe-instructions">
+          <h5>Instructions</h5>
+          <ol>
+            {recipe.instructions.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }
