@@ -706,6 +706,31 @@ body {
   font-weight: 500;
 }
 
+.system-prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.system-prompt-header label {
+  margin-bottom: 0;
+}
+
+.reset-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.reset-btn:hover {
+  background: var(--border-color);
+}
+
 .dietary-field,
 .system-prompt-field {
   width: 100%;

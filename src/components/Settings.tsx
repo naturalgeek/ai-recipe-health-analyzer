@@ -5,14 +5,14 @@ import { DEFAULT_SYSTEM_PROMPT } from '../services/openai';
 export function Settings() {
   const { config, updateConfig } = useApp();
   const [apiKey, setApiKey] = useState(config.openaiApiKey);
-  const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt || '');
+  const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt || DEFAULT_SYSTEM_PROMPT);
   const [dietaryRequirements, setDietaryRequirements] = useState(config.dietaryRequirements || 'I tolerate all foods');
   const [saved, setSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     setApiKey(config.openaiApiKey);
-    setSystemPrompt(config.systemPrompt || '');
+    setSystemPrompt(config.systemPrompt || DEFAULT_SYSTEM_PROMPT);
     setDietaryRequirements(config.dietaryRequirements || 'I tolerate all foods');
   }, [config.openaiApiKey, config.systemPrompt, config.dietaryRequirements]);
 
@@ -27,8 +27,14 @@ export function Settings() {
   };
 
   const hasChanges = apiKey !== config.openaiApiKey ||
-    systemPrompt !== (config.systemPrompt || '') ||
+    systemPrompt !== (config.systemPrompt || DEFAULT_SYSTEM_PROMPT) ||
     dietaryRequirements !== (config.dietaryRequirements || 'I tolerate all foods');
+
+  const isSystemPromptDefault = systemPrompt === DEFAULT_SYSTEM_PROMPT;
+
+  const handleResetSystemPrompt = () => {
+    setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
+  };
 
   const maskedKey = apiKey
     ? apiKey.substring(0, 7) + '...' + apiKey.substring(apiKey.length - 4)
@@ -85,17 +91,27 @@ export function Settings() {
         </div>
 
         <div className="system-prompt-input">
-          <label htmlFor="systemPrompt">Custom System Prompt (Advanced)</label>
+          <div className="system-prompt-header">
+            <label htmlFor="systemPrompt">System Prompt (Advanced)</label>
+            {!isSystemPromptDefault && (
+              <button
+                type="button"
+                className="reset-btn"
+                onClick={handleResetSystemPrompt}
+              >
+                Reset to Default
+              </button>
+            )}
+          </div>
           <textarea
             id="systemPrompt"
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
-            placeholder={DEFAULT_SYSTEM_PROMPT}
             className="system-prompt-field"
-            rows={4}
+            rows={5}
           />
           <p className="settings-hint">
-            Leave empty to use the default prompt. This defines how the AI analyzes recipes.
+            This defines how the AI analyzes recipes. Edit to customize the analysis behavior.
           </p>
         </div>
 
