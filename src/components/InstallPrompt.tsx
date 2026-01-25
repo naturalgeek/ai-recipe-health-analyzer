@@ -4,6 +4,10 @@ function isIOS(): boolean {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream;
 }
 
+function isAndroid(): boolean {
+  return /Android/i.test(navigator.userAgent);
+}
+
 function isInStandaloneMode(): boolean {
   return ('standalone' in window.navigator && (window.navigator as unknown as { standalone: boolean }).standalone) ||
     window.matchMedia('(display-mode: standalone)').matches;
@@ -18,13 +22,15 @@ export function InstallPrompt() {
   const [showFullPrompt, setShowFullPrompt] = useState(false);
   const [showDesktopToast, setShowDesktopToast] = useState(false);
 
-  useEffect(() => {
-    // Check if iOS Safari and not already installed
-    const dismissed = localStorage.getItem('install-prompt-dismissed');
-    const desktopDismissed = localStorage.getItem('desktop-ios-toast-dismissed');
+  const isiOS = isIOS();
+  const isAndroidDevice = isAndroid();
 
-    if (isIOS() && !isInStandaloneMode() && !dismissed) {
-      // Show banner after a short delay
+  useEffect(() => {
+    const dismissed = localStorage.getItem('install-prompt-dismissed');
+    const desktopDismissed = localStorage.getItem('desktop-toast-dismissed');
+
+    // Show banner for iOS or Android mobile users (not already installed)
+    if ((isiOS || isAndroidDevice) && !isInStandaloneMode() && !dismissed) {
       const timer = setTimeout(() => setShowBanner(true), 1500);
       return () => clearTimeout(timer);
     }
@@ -34,7 +40,7 @@ export function InstallPrompt() {
       const timer = setTimeout(() => setShowDesktopToast(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [isiOS, isAndroidDevice]);
 
   const handleDismiss = () => {
     setShowBanner(false);
@@ -44,7 +50,7 @@ export function InstallPrompt() {
 
   const handleDismissDesktopToast = () => {
     setShowDesktopToast(false);
-    localStorage.setItem('desktop-ios-toast-dismissed', 'true');
+    localStorage.setItem('desktop-toast-dismissed', 'true');
   };
 
   const handleShowInstructions = () => {
@@ -59,12 +65,12 @@ export function InstallPrompt() {
 
   return (
     <>
-      {/* Desktop toast for iOS app promotion */}
+      {/* Desktop toast for mobile app promotion */}
       {showDesktopToast && (
         <div className="desktop-ios-toast">
           <span className="toast-icon">📱</span>
           <span className="toast-text">
-            Also available as an iOS app! Open on your iPhone and add to Home Screen.
+            Available as a mobile app on iOS and Android! Open on your phone and add to Home Screen.
           </span>
           <button className="toast-close" onClick={handleDismissDesktopToast}>
             &times;
@@ -96,45 +102,78 @@ export function InstallPrompt() {
               <button className="close-btn" onClick={handleCloseInstructions}>&times;</button>
             </div>
 
-            <p>Install AI Recipe Analyzer on your iPhone for quick access and offline use.</p>
-
-            <div className="install-steps">
-              <div className="install-step">
-                <span className="step-number">1</span>
-                <span className="step-text">
-                  Tap the <strong>Share</strong> button
-                  <span className="share-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                      <polyline points="16 6 12 2 8 6"/>
-                      <line x1="12" y1="2" x2="12" y2="15"/>
-                    </svg>
-                  </span>
-                  at the bottom of Safari
-                </span>
-              </div>
-
-              <div className="install-step">
-                <span className="step-number">2</span>
-                <span className="step-text">
-                  Scroll down and tap <strong>"Add to Home Screen"</strong>
-                  <span className="add-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="12" y1="8" x2="12" y2="16"/>
-                      <line x1="8" y1="12" x2="16" y2="12"/>
-                    </svg>
-                  </span>
-                </span>
-              </div>
-
-              <div className="install-step">
-                <span className="step-number">3</span>
-                <span className="step-text">
-                  Tap <strong>"Add"</strong> in the top right corner
-                </span>
-              </div>
-            </div>
+            {isiOS ? (
+              <>
+                <p>Install AI Recipe Analyzer on your iPhone for quick access.</p>
+                <div className="install-steps">
+                  <div className="install-step">
+                    <span className="step-number">1</span>
+                    <span className="step-text">
+                      Tap the <strong>Share</strong> button
+                      <span className="share-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                          <polyline points="16 6 12 2 8 6"/>
+                          <line x1="12" y1="2" x2="12" y2="15"/>
+                        </svg>
+                      </span>
+                      at the bottom of Safari
+                    </span>
+                  </div>
+                  <div className="install-step">
+                    <span className="step-number">2</span>
+                    <span className="step-text">
+                      Scroll down and tap <strong>"Add to Home Screen"</strong>
+                      <span className="add-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="12" y1="8" x2="12" y2="16"/>
+                          <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                      </span>
+                    </span>
+                  </div>
+                  <div className="install-step">
+                    <span className="step-number">3</span>
+                    <span className="step-text">
+                      Tap <strong>"Add"</strong> in the top right corner
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>Install AI Recipe Analyzer on your Android device for quick access.</p>
+                <div className="install-steps">
+                  <div className="install-step">
+                    <span className="step-number">1</span>
+                    <span className="step-text">
+                      Tap the <strong>menu</strong> button
+                      <span className="menu-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="5" r="2"/>
+                          <circle cx="12" cy="12" r="2"/>
+                          <circle cx="12" cy="19" r="2"/>
+                        </svg>
+                      </span>
+                      in Chrome
+                    </span>
+                  </div>
+                  <div className="install-step">
+                    <span className="step-number">2</span>
+                    <span className="step-text">
+                      Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>
+                    </span>
+                  </div>
+                  <div className="install-step">
+                    <span className="step-number">3</span>
+                    <span className="step-text">
+                      Tap <strong>"Add"</strong> to confirm
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="install-prompt-actions">
               <button className="remind-btn" onClick={handleCloseInstructions}>

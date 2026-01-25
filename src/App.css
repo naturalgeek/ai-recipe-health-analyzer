@@ -1842,7 +1842,8 @@ body {
 }
 
 .share-icon,
-.add-icon {
+.add-icon,
+.menu-icon {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
