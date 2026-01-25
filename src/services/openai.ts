@@ -46,11 +46,13 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
   };
 }
 
+const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
+
 export async function extractRecipeFromUrl(
   url: string,
   apiKey: string
 ): Promise<string> {
-  const response = await fetch(OPENAI_API_URL, {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -58,26 +60,17 @@ export async function extractRecipeFromUrl(
     },
     body: JSON.stringify({
       model: 'gpt-5.2',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a recipe extraction assistant. When given a URL, fetch and extract the recipe information.
+      input: `Extract the recipe from the following URL: ${url}
+
 Format the output clearly with:
 - Recipe name
-- Servings/portions
+- Servings/portions (if available)
 - Prep time and cook time (if available)
 - Complete ingredients list with quantities
 - Step-by-step instructions
 
-Format as clean, readable text. If you cannot access the URL or find a recipe, explain the issue.`
-        },
-        {
-          role: 'user',
-          content: `Extract the recipe from the following URL: ${url}`
-        }
-      ],
-      temperature: 0.2,
-      max_tokens: 3000
+Format as clean, readable text suitable for nutritional analysis.`,
+      tools: [{ type: 'web_search' }]
     })
   });
 
@@ -87,20 +80,13 @@ Format as clean, readable text. If you cannot access the URL or find a recipe, e
   }
 
   const data = await response.json();
-  const content = data.choices[0]?.message?.content;
+  const outputText = data.output_text;
 
-  if (!content) {
+  if (!outputText) {
     throw new Error('No response from OpenAI');
   }
 
-  // Check if the response indicates an error accessing the URL
-  const lowerContent = content.toLowerCase();
-  if (lowerContent.includes('cannot access') || lowerContent.includes('unable to access') ||
-      lowerContent.includes('cannot browse') || lowerContent.includes('unable to browse')) {
-    throw new Error('Could not access the URL. Please copy and paste the recipe text instead.');
-  }
-
-  return content;
+  return outputText;
 }
 
 export async function assessImageNutrition(
@@ -115,7 +101,7 @@ export async function assessImageNutrition(
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-5.2',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -183,7 +169,7 @@ export async function assessRecipeNutrition(
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'gpt-5.2',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: prompt }

@@ -73,7 +73,7 @@ export function PasteRecipe() {
     setError(null);
 
     try {
-      // Use AI to extract the recipe directly from the URL
+      // Use GPT-5.2 Responses API with web_search to extract recipe from URL
       const recipeText = await extractRecipeFromUrl(recipeUrl, config.openaiApiKey);
       handleTextChange(recipeText);
     } catch (err) {
