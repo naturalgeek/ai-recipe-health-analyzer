@@ -530,10 +530,12 @@ body {
   font-size: 0.8rem;
   color: var(--text-muted);
   text-align: left;
+  max-width: 200px;
 }
 
 .dietary-items li {
   margin-bottom: 0.25rem;
+  white-space: pre-wrap;
 }
 
 .health-score {

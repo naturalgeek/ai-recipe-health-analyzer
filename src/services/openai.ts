@@ -55,7 +55,7 @@ const IMAGE_JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the foll
   "benefits": [<array of health benefits of this recipe>]
 }`;
 
-function parseAssessmentResponse(content: string, recipeId: string): NutritionalAssessment {
+function parseAssessmentResponse(content: string, recipeId: string, dietaryRequirementsUsed?: string): NutritionalAssessment {
   // Try to extract JSON from the response (may have markdown code blocks)
   let jsonContent = content;
   const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -85,7 +85,9 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
     rawResponse: content,
     // Optional fields for image assessments
     dishName: parsed.dishName,
-    detectedIngredients: parsed.detectedIngredients
+    detectedIngredients: parsed.detectedIngredients,
+    // Dietary requirements used for this assessment
+    dietaryRequirementsUsed
   };
 }
 
@@ -223,7 +225,7 @@ Base your estimates on:
 
   const systemPrompt = getSystemPrompt(config);
   const outputText = await callResponsesAPI(config.openaiApiKey, input, systemPrompt, 2000);
-  return parseAssessmentResponse(outputText, `image-${Date.now()}`);
+  return parseAssessmentResponse(outputText, `image-${Date.now()}`, config.dietaryRequirements);
 }
 
 export async function assessRecipeNutrition(
@@ -233,7 +235,7 @@ export async function assessRecipeNutrition(
   const prompt = buildPrompt(recipe, config);
   const systemPrompt = getSystemPrompt(config);
   const outputText = await callResponsesAPI(config.openaiApiKey, prompt, systemPrompt);
-  return parseAssessmentResponse(outputText, recipe.id);
+  return parseAssessmentResponse(outputText, recipe.id, config.dietaryRequirements);
 }
 
 function buildPrompt(recipe: Recipe, config: AppConfig): string {

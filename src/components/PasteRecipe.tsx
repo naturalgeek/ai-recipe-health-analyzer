@@ -385,14 +385,29 @@ export function PasteRecipe() {
   );
 }
 
-function PasteAssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
-  const { config } = useApp();
-  const { perServing, healthScore, dietScore, healthNotes, warnings, benefits, dishName, detectedIngredients } = assessment;
+function wrapText(text: string, maxLength: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
 
-  const dietaryRequirements = config.dietaryRequirements?.trim();
-  const hasDietaryRequirements = dietaryRequirements && dietaryRequirements.toLowerCase() !== 'i tolerate all foods';
+  for (const word of words) {
+    if (currentLine.length + word.length + 1 <= maxLength) {
+      currentLine = currentLine ? `${currentLine} ${word}` : word;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
+function PasteAssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
+  const { perServing, healthScore, dietScore, healthNotes, warnings, benefits, dishName, detectedIngredients, dietaryRequirementsUsed } = assessment;
+
+  const hasDietaryRequirements = dietaryRequirementsUsed && dietaryRequirementsUsed.trim().toLowerCase() !== 'i tolerate all foods';
   const dietaryItems = hasDietaryRequirements
-    ? dietaryRequirements.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
+    ? dietaryRequirementsUsed.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)
     : [];
 
   const getScoreColor = (score: number) => {
@@ -448,7 +463,7 @@ function PasteAssessmentDisplay({ assessment }: { assessment: NutritionalAssessm
           {dietaryItems.length > 0 && (
             <ul className="dietary-items">
               {dietaryItems.map((item, i) => (
-                <li key={i}>{item}</li>
+                <li key={i}>{wrapText(item, 60).join('\n')}</li>
               ))}
             </ul>
           )}

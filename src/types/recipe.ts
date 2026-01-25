@@ -39,6 +39,8 @@ export interface NutritionalAssessment {
   // Optional fields for image/URL assessments
   dishName?: string;
   detectedIngredients?: string[];
+  // Dietary requirements used for this assessment
+  dietaryRequirementsUsed?: string;
 }
 
 export interface AppConfig {
