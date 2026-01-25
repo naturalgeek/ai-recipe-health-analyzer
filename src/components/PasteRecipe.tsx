@@ -1,48 +1,9 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { assessRecipeNutrition, assessImageNutrition } from '../services/openai';
+import { assessRecipeNutrition, assessImageNutrition, extractRecipeFromHtml } from '../services/openai';
 import type { Recipe, NutritionalAssessment } from '../types/recipe';
 
-function extractRecipeText(html: string): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-
-  // Remove script, style, nav, header, footer, ads
-  const removeSelectors = 'script, style, nav, header, footer, aside, .ad, .ads, .advertisement, .sidebar, .comments, .related';
-  doc.querySelectorAll(removeSelectors).forEach(el => el.remove());
-
-  // Try to find recipe-specific content (common recipe schema/class names)
-  const recipeSelectors = [
-    '[itemtype*="Recipe"]',
-    '[class*="recipe"]',
-    '[id*="recipe"]',
-    'article',
-    'main',
-    '.content',
-    '#content'
-  ];
-
-  let content: Element | null = null;
-  for (const selector of recipeSelectors) {
-    content = doc.querySelector(selector);
-    if (content && content.textContent && content.textContent.trim().length > 200) {
-      break;
-    }
-  }
-
-  const textSource = content || doc.body;
-  const text = textSource.textContent || '';
-
-  // Clean up whitespace
-  return text
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n');
-}
-
-async function fetchRecipeFromUrl(url: string): Promise<string> {
+async function fetchHtmlFromUrl(url: string): Promise<string> {
   // List of CORS proxies to try
   const proxies = [
     (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -54,8 +15,7 @@ async function fetchRecipeFromUrl(url: string): Promise<string> {
   try {
     const response = await fetch(url, { mode: 'cors' });
     if (response.ok) {
-      const html = await response.text();
-      return extractRecipeText(html);
+      return await response.text();
     }
   } catch {
     // CORS error expected, continue with proxies
@@ -68,9 +28,8 @@ async function fetchRecipeFromUrl(url: string): Promise<string> {
       const response = await fetch(proxyUrl);
       if (response.ok) {
         const html = await response.text();
-        const text = extractRecipeText(html);
-        if (text.length > 100) {
-          return text;
+        if (html.length > 100) {
+          return html;
         }
       }
     } catch {
@@ -78,7 +37,7 @@ async function fetchRecipeFromUrl(url: string): Promise<string> {
     }
   }
 
-  throw new Error('Could not fetch recipe. Try copying and pasting the recipe text instead.');
+  throw new Error('Could not fetch the webpage. Please copy and paste the recipe text instead.');
 }
 
 function detectPortions(text: string): string | null {
@@ -142,12 +101,20 @@ export function PasteRecipe() {
       return;
     }
 
+    if (!config.openaiApiKey) {
+      setError('Please configure your OpenAI API key in Settings first');
+      return;
+    }
+
     setIsFetching(true);
     setError(null);
 
     try {
-      const text = await fetchRecipeFromUrl(recipeUrl);
-      handleTextChange(text);
+      // Fetch the HTML from the URL
+      const html = await fetchHtmlFromUrl(recipeUrl);
+      // Use AI to extract the recipe
+      const recipeText = await extractRecipeFromHtml(html, recipeUrl, config.openaiApiKey);
+      handleTextChange(recipeText);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch recipe');
     } finally {
@@ -266,9 +233,9 @@ export function PasteRecipe() {
             <button
               className="fetch-btn"
               onClick={handleFetchUrl}
-              disabled={isFetching || !recipeUrl.trim()}
+              disabled={isFetching || !recipeUrl.trim() || !config.openaiApiKey}
             >
-              {isFetching ? 'Fetching...' : 'Fetch'}
+              {isFetching ? 'Extracting...' : 'Fetch'}
             </button>
           </div>
         </div>

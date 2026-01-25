@@ -46,6 +46,55 @@ function parseAssessmentResponse(content: string, recipeId: string): Nutritional
   };
 }
 
+export async function extractRecipeFromHtml(
+  html: string,
+  url: string,
+  apiKey: string
+): Promise<string> {
+  // Truncate HTML if too long (keep first 50k chars to stay within token limits)
+  const truncatedHtml = html.length > 50000 ? html.substring(0, 50000) + '\n[...truncated]' : html;
+
+  const response = await fetch(OPENAI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a recipe extraction assistant. Extract recipe information from HTML content and format it clearly.
+Extract: recipe name, servings/portions, prep time, cook time, ingredients list, and instructions.
+Format the output as clean, readable text that can be used for nutritional analysis.
+If you cannot find a recipe in the content, respond with "NO_RECIPE_FOUND".`
+        },
+        {
+          role: 'user',
+          content: `Extract the recipe from this webpage (${url}):\n\n${truncatedHtml}`
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 2000
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices[0]?.message?.content;
+
+  if (!content || content.includes('NO_RECIPE_FOUND')) {
+    throw new Error('Could not find a recipe on this page');
+  }
+
+  return content;
+}
+
 export async function assessImageNutrition(
   imageBase64: string,
   portions: string,
