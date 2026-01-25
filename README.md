@@ -14,6 +14,9 @@ A Progressive Web App that provides AI-powered nutritional assessment for your r
 - **AI-Powered Analysis** - Get detailed nutritional information per serving using OpenAI's GPT-5.2
 - **Image Analysis** - Upload a photo and AI will identify the dish and estimate nutrition
 - **Health Score** - Each recipe receives a 1-10 health score with benefits and warnings
+- **Personal Diet Score** - Get a personalized 1-10 score based on your dietary requirements
+- **Dietary Requirements** - Configure allergies, intolerances, or preferences (e.g., gluten-free, low sodium)
+- **Custom System Prompt** - Advanced users can customize the AI analysis behavior
 - **Ingredient Search** - Browse recipes by ingredient
 - **Offline Support** - Works offline after first load (PWA with service worker)
 - **Install as App** - Add to home screen on iOS and Android for native app experience
@@ -44,6 +47,10 @@ A Progressive Web App that provides AI-powered nutritional assessment for your r
 
 Your key is stored only in your browser's local storage.
 
+You can also configure:
+- **Personal Dietary Requirements** - Allergies, intolerances, or diet preferences
+- **Custom System Prompt** - Advanced customization of AI analysis behavior
+
 ### 2. Import Recipes from RecipeKeeper
 
 1. Export your recipes from RecipeKeeper app (creates a .zip file)
@@ -71,10 +78,18 @@ Go to the **Quick Assess** tab and choose one of three methods:
 3. Enter the number of portions
 4. Click **Analyze Nutrition**
 
-### 4. View Nutritional Analysis
+### 4. Configure Personal Dietary Requirements (Optional)
+
+1. Go to the **Settings** tab
+2. Under **Personal Dietary Requirements**, enter any allergies, intolerances, or preferences
+3. Examples: "gluten intolerant", "lactose free", "low sodium diet", "vegetarian"
+4. The AI will factor these into your Personal Diet Score
+
+### 5. View Nutritional Analysis
 
 Results include:
-- **Health Score** (1-10)
+- **Health Score** (1-10) - General healthiness of the recipe
+- **Personal Diet Score** (1-10) - How well the recipe fits your dietary requirements
 - **Per-serving nutrients**: calories, protein, carbs, fat, fiber, sugar, sodium
 - **Health benefits** and **warnings**
 - **Nutritional notes**
