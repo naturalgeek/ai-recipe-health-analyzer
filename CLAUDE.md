@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RecipeKeeper Assesser is a client-side React web application that imports RecipeKeeper export files (.zip containing recipes.html and images), stores them locally in IndexedDB, and provides AI-powered nutritional assessment using the OpenAI API. It also supports quick assessment of pasted recipe text.
+AI Recipe Analyzer is a Progressive Web App (PWA) that provides AI-powered nutritional assessment for recipes. It supports multiple input methods: RecipeKeeper .zip import, pasted text, URL fetching, and photo upload. All data is stored locally in IndexedDB. Uses OpenAI GPT-4o (with vision) for analysis.
 
 ## Commands
 
 ```bash
 npm run dev      # Start development server (http://localhost:5173)
-npm run build    # TypeScript check + production build to dist/
+npm run build    # Generate icons + TypeScript check + production build to dist/
 npm run lint     # Run ESLint
 npm run preview  # Preview production build locally
 ```
@@ -20,27 +20,35 @@ npm run preview  # Preview production build locally
 ### Data Flow
 
 1. **Import**: User uploads RecipeKeeper .zip → `zipImport.ts` extracts with JSZip → `recipeParser.ts` parses HTML → `storage.ts` saves to IndexedDB
-2. **Quick Assess**: User pastes recipe text → `PasteRecipe.tsx` detects portions → `openai.ts` assesses directly (no storage)
-3. **Display**: `AppContext.tsx` loads from IndexedDB → components render recipes
-4. **Assessment**: User clicks assess → `openai.ts` calls GPT API → result saved to IndexedDB
+2. **Quick Assess (Text)**: User pastes text or fetches URL → `PasteRecipe.tsx` detects portions → `openai.ts` assesses
+3. **Quick Assess (Image)**: User uploads photo → `openai.ts` uses GPT-4o vision to analyze
+4. **Display**: `AppContext.tsx` loads from IndexedDB → components render recipes
+5. **Assessment**: User clicks assess → `openai.ts` calls GPT API → result saved to IndexedDB
 
 ### Key Services (`src/services/`)
 
 - **zipImport.ts**: Extracts .zip, loads images as base64, orchestrates import
-- **recipeParser.ts**: Parses RecipeKeeper HTML format using DOMParser, extracts recipe metadata
+- **recipeParser.ts**: Parses RecipeKeeper HTML format using DOMParser
 - **storage.ts**: IndexedDB wrapper with stores for `recipes`, `assessments`, `config`
-- **openai.ts**: Builds nutritional analysis prompt, calls OpenAI chat completions API
+- **openai.ts**: Nutritional analysis via GPT-4o, supports both text and image (vision) analysis
+
+### Key Components (`src/components/`)
+
+- **PasteRecipe.tsx**: Quick assessment with URL fetch, text paste, and image upload
+- **InstallPrompt.tsx**: iOS PWA install guide (detects iOS Safari, shows instructions)
+- **RecipeDetail.tsx**: Recipe display with assessment results
+- **Settings.tsx**: API key configuration with setup tutorial
 
 ### State Management
 
-Single React Context (`AppContext.tsx`) manages all app state: recipes, selected recipe, assessment results, config (API key), loading states.
+Single React Context (`AppContext.tsx`) manages: recipes, selected recipe, assessments, config, loading states.
 
-### Storage
+### PWA Features (`public/`)
 
-All data persists in browser IndexedDB (`recipekeeper-assesser` database):
-- Recipes with embedded base64 images
-- Nutritional assessments keyed by recipe ID
-- User config (OpenAI API key)
+- **manifest.json**: Web app manifest for installability
+- **sw.js**: Service worker for offline caching (network-first strategy)
+- **icon.svg**: Source icon (leaf design)
+- **icon-192.png, icon-512.png**: Generated from SVG via `scripts/generate-icons.js`
 
 ## TypeScript Notes
 
@@ -51,8 +59,8 @@ All data persists in browser IndexedDB (`recipekeeper-assesser` database):
 
 - **GitHub Pages**: Auto-deploys on push to main via `.github/workflows/pages.yml`
 - **Releases**: Auto version bump and release on push to main via `.github/workflows/release.yml`
-- Vite base path is set to `/ai-recipe-health-analyzer/` for GitHub Pages
+- Vite base path is `/ai-recipe-health-analyzer/` for GitHub Pages
 
-## Deployment
+## URL Fetching
 
-Static site - build outputs to `dist/`, serve with any web server. No backend required.
+Recipe URL fetching uses multiple CORS proxies as fallbacks (allorigins, corsproxy.io, codetabs). Direct fetch is attempted first.
