@@ -12,6 +12,18 @@ interface ParsedRecipe {
   instructions: string[];
 }
 
+// Remove markdown citations like ([site.com](https://...)) or [site.com](https://...)
+function stripCitations(text: string): string {
+  return text
+    // Remove citations in parentheses: ([text](url))
+    .replace(/\s*\(\[.*?\]\(https?:\/\/[^)]+\)\)/g, '')
+    // Remove standalone markdown links: [text](url)
+    .replace(/\s*\[([^\]]*)\]\(https?:\/\/[^)]+\)/g, '')
+    // Clean up extra whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function detectPortions(text: string): string | null {
   const patterns = [
     /(?:serves?|servings?|portions?|yields?)\s*[:\-]?\s*(\d+(?:\s*-\s*\d+)?)/i,
@@ -30,7 +42,7 @@ function detectPortions(text: string): string | null {
 }
 
 function parseRecipeFromText(text: string): ParsedRecipe {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = text.split('\n').map(l => stripCitations(l.trim())).filter(Boolean);
 
   let name = 'Recipe';
   let servings: string | null = null;
