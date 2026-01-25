@@ -15,7 +15,7 @@ type SidebarView = 'recipes' | 'ingredients';
 function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('recipes');
   const [sidebarView, setSidebarView] = useState<SidebarView>('recipes');
-  const { isLoading, recipes, error } = useApp();
+  const { isLoading, recipes, error, selectedRecipe, selectRecipe } = useApp();
 
   if (isLoading) {
     return (
@@ -71,7 +71,7 @@ function AppContent() {
               </div>
             )}
             {recipes.length > 0 && (
-              <div className="recipes-layout">
+              <div className={`recipes-layout ${selectedRecipe ? 'has-selection' : ''}`}>
                 <aside className="recipes-sidebar">
                   <FileUpload />
                   <div className="sidebar-tabs">
@@ -91,6 +91,11 @@ function AppContent() {
                   {sidebarView === 'recipes' ? <RecipeList /> : <IngredientSearch />}
                 </aside>
                 <section className="recipe-main">
+                  {selectedRecipe && (
+                    <button className="mobile-back-btn" onClick={() => selectRecipe(null)}>
+                      ← Back to list
+                    </button>
+                  )}
                   <RecipeDetail />
                 </section>
               </div>

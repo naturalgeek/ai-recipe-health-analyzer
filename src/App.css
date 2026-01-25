@@ -224,6 +224,10 @@ body {
   padding: 2rem;
 }
 
+.mobile-back-btn {
+  display: none;
+}
+
 /* Recipe list */
 .recipe-list-container {
   flex: 1;
@@ -1327,16 +1331,46 @@ body {
 
   .recipes-sidebar {
     width: 100%;
-    min-height: 200px;
-    max-height: 45vh;
-    flex-shrink: 0;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
   }
 
   .recipe-main {
+    display: none;
+  }
+
+  /* When recipe is selected on mobile, show detail and hide sidebar */
+  .recipes-layout.has-selection .recipes-sidebar {
+    display: none;
+  }
+
+  .recipes-layout.has-selection .recipe-main {
+    display: block;
     flex: 1;
-    min-height: 0;
     padding: 1rem;
     overflow-y: auto;
+  }
+
+  .mobile-back-btn {
+    display: block;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--primary-color);
+  }
+
+  /* Hide upload section on mobile when recipes are loaded */
+  .recipes-sidebar .upload-section {
+    display: none;
+  }
+
+  .recipes-sidebar .sidebar-tabs {
+    border-bottom: 1px solid var(--border-color);
   }
 
   .recipe-detail-empty {
