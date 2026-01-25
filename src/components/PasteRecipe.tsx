@@ -1,7 +1,68 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { assessRecipeNutrition } from '../services/openai';
+import { assessRecipeNutrition, assessImageNutrition } from '../services/openai';
 import type { Recipe, NutritionalAssessment } from '../types/recipe';
+
+function extractRecipeText(html: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  // Remove script, style, nav, header, footer, ads
+  const removeSelectors = 'script, style, nav, header, footer, aside, .ad, .ads, .advertisement, .sidebar, .comments, .related';
+  doc.querySelectorAll(removeSelectors).forEach(el => el.remove());
+
+  // Try to find recipe-specific content (common recipe schema/class names)
+  const recipeSelectors = [
+    '[itemtype*="Recipe"]',
+    '[class*="recipe"]',
+    '[id*="recipe"]',
+    'article',
+    'main',
+    '.content',
+    '#content'
+  ];
+
+  let content: Element | null = null;
+  for (const selector of recipeSelectors) {
+    content = doc.querySelector(selector);
+    if (content && content.textContent && content.textContent.trim().length > 200) {
+      break;
+    }
+  }
+
+  const textSource = content || doc.body;
+  const text = textSource.textContent || '';
+
+  // Clean up whitespace
+  return text
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+async function fetchRecipeFromUrl(url: string): Promise<string> {
+  // Try direct fetch first
+  try {
+    const response = await fetch(url);
+    if (response.ok) {
+      const html = await response.text();
+      return extractRecipeText(html);
+    }
+  } catch {
+    // CORS error, try proxy
+  }
+
+  // Try with CORS proxy
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  const response = await fetch(proxyUrl);
+  if (!response.ok) {
+    throw new Error('Failed to fetch recipe. The website may be blocking access.');
+  }
+  const html = await response.text();
+  return extractRecipeText(html);
+}
 
 function detectPortions(text: string): string | null {
   const patterns = [
@@ -50,10 +111,51 @@ function parseRecipeText(text: string, portions: string): Recipe {
 export function PasteRecipe() {
   const { config, setError } = useApp();
   const [recipeText, setRecipeText] = useState('');
+  const [recipeUrl, setRecipeUrl] = useState('');
   const [portions, setPortions] = useState('');
   const [showPortionsInput, setShowPortionsInput] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [assessment, setAssessment] = useState<NutritionalAssessment | null>(null);
+  const [recipeImage, setRecipeImage] = useState<string | null>(null);
+
+  const handleFetchUrl = async () => {
+    if (!recipeUrl.trim()) {
+      setError('Please enter a URL');
+      return;
+    }
+
+    setIsFetching(true);
+    setError(null);
+
+    try {
+      const text = await fetchRecipeFromUrl(recipeUrl);
+      handleTextChange(text);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch recipe');
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRecipeImage(reader.result as string);
+      setAssessment(null);
+      setShowPortionsInput(true); // Always ask for portions with images
+      if (!portions) setPortions('1');
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleTextChange = (text: string) => {
     setRecipeText(text);
@@ -70,8 +172,11 @@ export function PasteRecipe() {
   };
 
   const handleAssess = async () => {
-    if (!recipeText.trim()) {
-      setError('Please paste a recipe first');
+    const hasText = recipeText.trim().length > 0;
+    const hasImage = recipeImage !== null;
+
+    if (!hasText && !hasImage) {
+      setError('Please paste a recipe, enter a URL, or upload an image');
       return;
     }
 
@@ -90,8 +195,15 @@ export function PasteRecipe() {
     setError(null);
 
     try {
-      const recipe = parseRecipeText(recipeText, portions);
-      const result = await assessRecipeNutrition(recipe, config.openaiApiKey);
+      let result: NutritionalAssessment;
+
+      if (hasImage) {
+        result = await assessImageNutrition(recipeImage, portions, config.openaiApiKey);
+      } else {
+        const recipe = parseRecipeText(recipeText, portions);
+        result = await assessRecipeNutrition(recipe, config.openaiApiKey);
+      }
+
       setAssessment(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Assessment failed');
@@ -102,10 +214,16 @@ export function PasteRecipe() {
 
   const handleClear = () => {
     setRecipeText('');
+    setRecipeUrl('');
     setPortions('');
     setShowPortionsInput(false);
     setAssessment(null);
+    setRecipeImage(null);
     setError(null);
+  };
+
+  const handleRemoveImage = () => {
+    setRecipeImage(null);
   };
 
   return (
@@ -113,16 +231,68 @@ export function PasteRecipe() {
       <div className="paste-recipe-input">
         <h3>Quick Recipe Assessment</h3>
         <p className="paste-description">
-          Paste any recipe text below to get an instant nutritional analysis.
+          Paste recipe text, enter a URL, or upload a photo to get instant nutritional analysis.
         </p>
+
+        <div className="url-input-section">
+          <label htmlFor="recipeUrl">Recipe URL:</label>
+          <div className="url-input-group">
+            <input
+              id="recipeUrl"
+              type="url"
+              className="url-field"
+              placeholder="https://example.com/recipe..."
+              value={recipeUrl}
+              onChange={(e) => setRecipeUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleFetchUrl()}
+            />
+            <button
+              className="fetch-btn"
+              onClick={handleFetchUrl}
+              disabled={isFetching || !recipeUrl.trim()}
+            >
+              {isFetching ? 'Fetching...' : 'Fetch'}
+            </button>
+          </div>
+        </div>
+
+        <div className="input-divider">
+          <span>or paste text</span>
+        </div>
 
         <textarea
           className="recipe-textarea"
           placeholder="Paste your recipe here (ingredients, instructions, etc.)..."
           value={recipeText}
           onChange={(e) => handleTextChange(e.target.value)}
-          rows={12}
+          rows={10}
         />
+
+        <div className="input-divider">
+          <span>or upload a photo</span>
+        </div>
+
+        <div className="image-upload-section">
+          {!recipeImage ? (
+            <label className="image-upload-zone">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              <span className="upload-icon">📷</span>
+              <span>Click to upload a recipe or dish photo</span>
+            </label>
+          ) : (
+            <div className="image-preview">
+              <img src={recipeImage} alt="Recipe" />
+              <button className="remove-image-btn" onClick={handleRemoveImage}>
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
 
         {showPortionsInput && (
           <div className="portions-input">
@@ -154,7 +324,7 @@ export function PasteRecipe() {
           <button
             className="assess-btn"
             onClick={handleAssess}
-            disabled={isAssessing || !recipeText.trim() || !config.openaiApiKey}
+            disabled={isAssessing || (!recipeText.trim() && !recipeImage) || !config.openaiApiKey}
           >
             {isAssessing ? 'Analyzing...' : 'Analyze Nutrition'}
           </button>
