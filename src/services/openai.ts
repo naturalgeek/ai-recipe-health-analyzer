@@ -178,15 +178,24 @@ Format as clean, readable text suitable for nutritional analysis.`,
   return outputText;
 }
 
+function getDietarySection(config: AppConfig): string {
+  const dietary = config.dietaryRequirements?.trim();
+  if (dietary && dietary.toLowerCase() !== 'i tolerate all foods') {
+    return `\nMy dietary requirements: ${dietary}\nPlease highlight any ingredients that may conflict with these requirements in the warnings section.\n`;
+  }
+  return '';
+}
+
 export async function assessImageNutrition(
   imageBase64: string,
   portions: string,
   config: AppConfig
 ): Promise<NutritionalAssessment> {
+  const dietarySection = getDietarySection(config);
   const prompt = `Analyze this image of a dish/recipe and estimate nutritional information per serving.
 
 Number of servings shown: ${portions}
-
+${dietarySection}
 Identify what dish this is, list the ingredients you can detect with estimated quantities, then provide nutritional analysis.
 
 ${IMAGE_JSON_FORMAT_INSTRUCTIONS}
@@ -218,15 +227,16 @@ export async function assessRecipeNutrition(
   recipe: Recipe,
   config: AppConfig
 ): Promise<NutritionalAssessment> {
-  const prompt = buildPrompt(recipe);
+  const prompt = buildPrompt(recipe, config);
   const systemPrompt = getSystemPrompt(config);
   const outputText = await callResponsesAPI(config.openaiApiKey, prompt, systemPrompt);
   return parseAssessmentResponse(outputText, recipe.id);
 }
 
-function buildPrompt(recipe: Recipe): string {
+function buildPrompt(recipe: Recipe, config: AppConfig): string {
   const servings = recipe.yield || '1';
   const ingredients = recipe.ingredients.join('\n');
+  const dietarySection = getDietarySection(config);
 
   return `Analyze this recipe and provide nutritional information per serving.
 
@@ -234,7 +244,7 @@ Recipe: ${recipe.name}
 Servings: ${servings}
 Prep Time: ${recipe.prepTime}
 Cook Time: ${recipe.cookTime}
-
+${dietarySection}
 Ingredients:
 ${ingredients}
 
