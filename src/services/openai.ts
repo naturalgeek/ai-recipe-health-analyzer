@@ -80,7 +80,11 @@ Format as clean, readable text suitable for nutritional analysis.`,
   }
 
   const data = await response.json();
-  const outputText = data.output_text;
+
+  // Find the message output in the response array
+  const messageOutput = data.output?.find((item: { type: string }) => item.type === 'message');
+  const textContent = messageOutput?.content?.find((c: { type: string }) => c.type === 'output_text');
+  const outputText = textContent?.text;
 
   if (!outputText) {
     throw new Error('No response from OpenAI');
