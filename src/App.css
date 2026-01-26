@@ -634,6 +634,7 @@ body {
   font-size: 2rem;
   font-weight: bold;
   line-height: 1;
+  color: var(--text-color);
 }
 
 .score-label {
@@ -723,6 +724,9 @@ body {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   background: var(--card-bg);
+  color: inherit;
+  font: inherit;
+  padding: 0;
 }
 
 .score-circle.clickable:hover {

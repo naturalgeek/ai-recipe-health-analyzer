@@ -299,12 +299,12 @@ Recipe context:
 ${recipeContext}
 ${dietaryContext}
 
-Provide practical suggestions to ${scoreGoal}. Focus on realistic, achievable modifications that maintain the dish's character.
+Provide 2-3 brief, practical suggestions to ${scoreGoal}. Keep each suggestion to one short sentence.
 
 Respond with JSON in this format:
 {
-  "suggestions": [<array of 3-5 specific, actionable suggestions>],
-  "summary": <string - one sentence summarizing the main improvement opportunity>
+  "suggestions": [<array of 2-3 brief suggestions, each one sentence>],
+  "summary": <string - one short sentence summarizing the key opportunity>
 }`;
 
   const outputText = await callResponsesAPI(apiKey, prompt);
