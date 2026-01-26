@@ -299,12 +299,12 @@ Recipe context:
 ${recipeContext}
 ${dietaryContext}
 
-Provide 2-3 brief, practical suggestions to ${scoreGoal}. Keep each suggestion to one short sentence.
+Give 2 quick tips to ${scoreGoal}. Be very concise - just a few words each.
 
-Respond with JSON in this format:
+Respond with JSON:
 {
-  "suggestions": [<array of 2-3 brief suggestions, each one sentence>],
-  "summary": <string - one short sentence summarizing the key opportunity>
+  "suggestions": [<2 very brief tips, max 8 words each>],
+  "summary": <one short phrase, max 6 words>
 }`;
 
   const outputText = await callResponsesAPI(apiKey, prompt);
