@@ -32,6 +32,7 @@ export interface NutritionalAssessment {
   };
   healthScore: number; // 1-10
   dietScore: number; // 1-10, compliance with dietary requirements
+  healthSummary: string; // Easy-to-understand sentence about overall healthiness
   healthNotes: string[];
   warnings: string[];
   benefits: string[];

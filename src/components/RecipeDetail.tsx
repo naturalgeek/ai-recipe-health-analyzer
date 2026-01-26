@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatPrepTime } from '../services/recipeParser';
+import { getOptimizationRecommendations } from '../services/openai';
 import type { NutritionalAssessment } from '../types/recipe';
+import type { OptimizationResult } from '../services/openai';
 
 export function RecipeDetail() {
   const { selectedRecipe, assessment, isAssessing, assessRecipe, config, error, setError } = useApp();
@@ -159,7 +161,10 @@ export function RecipeDetail() {
             >
               Re-analyze
             </button>
-            <AssessmentDisplay assessment={assessment} />
+            <AssessmentDisplay
+              assessment={assessment}
+              recipeContext={`Recipe: ${selectedRecipe.name}\nServings: ${portions}\nIngredients:\n${selectedRecipe.ingredients.join('\n')}\n\nInstructions:\n${selectedRecipe.directions}`}
+            />
           </>
         )}
       </div>
@@ -202,8 +207,17 @@ function DietaryTooltip({ items }: { items: string[] }) {
   );
 }
 
-function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }) {
-  const { perServing, healthScore, dietScore, healthNotes, warnings, benefits, dietaryRequirementsUsed } = assessment;
+interface AssessmentDisplayProps {
+  assessment: NutritionalAssessment;
+  recipeContext: string;
+}
+
+function AssessmentDisplay({ assessment, recipeContext }: AssessmentDisplayProps) {
+  const { config } = useApp();
+  const { perServing, healthScore, dietScore, healthSummary, healthNotes, warnings, benefits, dietaryRequirementsUsed } = assessment;
+  const [optimizationType, setOptimizationType] = useState<'health' | 'diet' | null>(null);
+  const [optimization, setOptimization] = useState<OptimizationResult | null>(null);
+  const [isLoadingOptimization, setIsLoadingOptimization] = useState(false);
 
   const hasDietaryRequirements = dietaryRequirementsUsed && dietaryRequirementsUsed.trim().toLowerCase() !== 'i tolerate all foods';
   const dietaryItems = hasDietaryRequirements
@@ -216,34 +230,97 @@ function AssessmentDisplay({ assessment }: { assessment: NutritionalAssessment }
     return '#f44336';
   };
 
+  const handleScoreClick = async (type: 'health' | 'diet') => {
+    if (optimizationType === type) {
+      setOptimizationType(null);
+      setOptimization(null);
+      return;
+    }
+
+    setOptimizationType(type);
+    setOptimization(null);
+    setIsLoadingOptimization(true);
+
+    try {
+      const result = await getOptimizationRecommendations(
+        recipeContext,
+        type,
+        type === 'health' ? healthScore : dietScore,
+        dietaryRequirementsUsed,
+        config.openaiApiKey
+      );
+      setOptimization(result);
+    } catch (err) {
+      console.error('Failed to get optimization:', err);
+    } finally {
+      setIsLoadingOptimization(false);
+    }
+  };
+
   return (
     <div className="assessment-display">
+      {healthSummary && (
+        <div className="health-summary">
+          <p>{healthSummary}</p>
+        </div>
+      )}
+
       <div className="scores-row">
         <div className="health-score">
-          <div
-            className="score-circle"
+          <button
+            className={`score-circle clickable ${optimizationType === 'health' ? 'active' : ''}`}
             style={{ borderColor: getScoreColor(healthScore) }}
+            onClick={() => handleScoreClick('health')}
+            title="Click for improvement tips"
           >
             <span className="score-value">{healthScore}</span>
             <span className="score-label">/10</span>
-          </div>
+          </button>
           <span className="score-text">Health Score</span>
         </div>
 
         <div className="health-score">
-          <div
-            className="score-circle"
+          <button
+            className={`score-circle clickable ${optimizationType === 'diet' ? 'active' : ''}`}
             style={{ borderColor: getScoreColor(dietScore) }}
+            onClick={() => handleScoreClick('diet')}
+            title="Click for improvement tips"
           >
             <span className="score-value">{dietScore}</span>
             <span className="score-label">/10</span>
-          </div>
+          </button>
           <span className="score-text">
             Personal Diet Score
             <DietaryTooltip items={dietaryItems} />
           </span>
         </div>
       </div>
+
+      {(optimizationType || isLoadingOptimization) && (
+        <div className="optimization-section">
+          <h4>
+            {optimizationType === 'health' ? 'Health' : 'Diet'} Improvement Tips
+            <button className="close-optimization" onClick={() => { setOptimizationType(null); setOptimization(null); }}>
+              &times;
+            </button>
+          </h4>
+          {isLoadingOptimization ? (
+            <div className="optimization-loading">
+              <div className="spinner small"></div>
+              <span>Getting suggestions...</span>
+            </div>
+          ) : optimization ? (
+            <>
+              <p className="optimization-summary">{optimization.summary}</p>
+              <ul className="optimization-suggestions">
+                {optimization.suggestions.map((suggestion, i) => (
+                  <li key={i}>{suggestion}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </div>
+      )}
 
       <div className="nutrition-grid">
         <NutrientCard label="Calories" value={perServing.calories} unit="kcal" />

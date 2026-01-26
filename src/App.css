@@ -703,6 +703,106 @@ body {
   text-align: right;
 }
 
+/* Health Summary */
+.health-summary {
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.health-summary p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+/* Clickable Score Circles */
+.score-circle.clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: var(--card-bg);
+}
+
+.score-circle.clickable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.score-circle.clickable.active {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(210, 68, 0, 0.3);
+}
+
+/* Optimization Section */
+.optimization-section {
+  background: var(--bg-color);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  border-left: 3px solid var(--primary-color);
+}
+
+.optimization-section h4 {
+  margin: 0 0 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--primary-color);
+  font-size: 0.95rem;
+}
+
+.close-optimization {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-optimization:hover {
+  color: var(--text-color);
+}
+
+.optimization-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.spinner.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.optimization-summary {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  font-style: italic;
+}
+
+.optimization-suggestions {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.optimization-suggestions li {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.optimization-suggestions li:last-child {
+  margin-bottom: 0;
+}
+
 .reanalyze-btn {
   margin-bottom: 1rem;
   padding: 0.5rem 1rem;

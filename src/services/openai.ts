@@ -30,6 +30,7 @@ const JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the following 
   },
   "healthScore": <number 1-10, where 10 is healthiest>,
   "dietScore": <number 1-10, personal diet score where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
+  "healthSummary": <string - one easy-to-understand sentence summarizing how healthy this recipe is and why, written for a general audience>,
   "healthNotes": [<array of brief observations about the nutritional profile>],
   "warnings": [<array of any health concerns, dietary conflicts, or high values to be aware of>],
   "benefits": [<array of health benefits of this recipe>]
@@ -50,6 +51,7 @@ const IMAGE_JSON_FORMAT_INSTRUCTIONS = `Please provide your analysis in the foll
   },
   "healthScore": <number 1-10, where 10 is healthiest>,
   "dietScore": <number 1-10, personal diet score where 10 means fully compliant with user's dietary requirements, 1 means major conflicts>,
+  "healthSummary": <string - one easy-to-understand sentence summarizing how healthy this dish is and why, written for a general audience>,
   "healthNotes": [<array of brief observations about the nutritional profile>],
   "warnings": [<array of any health concerns, dietary conflicts, or high values to be aware of>],
   "benefits": [<array of health benefits of this recipe>]
@@ -79,6 +81,7 @@ function parseAssessmentResponse(content: string, recipeId: string, dietaryRequi
     },
     healthScore: parsed.healthScore || 5,
     dietScore: parsed.dietScore || 10,
+    healthSummary: parsed.healthSummary || '',
     healthNotes: parsed.healthNotes || [],
     warnings: parsed.warnings || [],
     benefits: parsed.benefits || [],
@@ -267,4 +270,55 @@ Base your estimates on standard nutritional databases and consider:
 - Cooking methods and their effects
 - Common ingredient substitutions in similar recipes
 - Be realistic and accurate with your estimates`;
+}
+
+export interface OptimizationResult {
+  suggestions: string[];
+  summary: string;
+}
+
+export async function getOptimizationRecommendations(
+  recipeContext: string,
+  scoreType: 'health' | 'diet',
+  currentScore: number,
+  dietaryRequirements: string | undefined,
+  apiKey: string
+): Promise<OptimizationResult> {
+  const dietaryContext = dietaryRequirements && dietaryRequirements.toLowerCase() !== 'i tolerate all foods'
+    ? `\nUser's dietary requirements: ${dietaryRequirements}`
+    : '';
+
+  const scoreTypeLabel = scoreType === 'health' ? 'Health Score' : 'Personal Diet Score';
+  const scoreGoal = scoreType === 'health'
+    ? 'improve the overall healthiness of this recipe (higher fiber, lower sugar/sodium, better macros, more nutrients)'
+    : `make this recipe better comply with the user's dietary requirements${dietaryContext}`;
+
+  const prompt = `You are a professional nutritionist. The user has a recipe with a ${scoreTypeLabel} of ${currentScore}/10.
+
+Recipe context:
+${recipeContext}
+${dietaryContext}
+
+Provide practical suggestions to ${scoreGoal}. Focus on realistic, achievable modifications that maintain the dish's character.
+
+Respond with JSON in this format:
+{
+  "suggestions": [<array of 3-5 specific, actionable suggestions>],
+  "summary": <string - one sentence summarizing the main improvement opportunity>
+}`;
+
+  const outputText = await callResponsesAPI(apiKey, prompt);
+
+  // Parse the response
+  let jsonContent = outputText;
+  const jsonMatch = outputText.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonContent = jsonMatch[1].trim();
+  }
+
+  const parsed = JSON.parse(jsonContent);
+  return {
+    suggestions: parsed.suggestions || [],
+    summary: parsed.summary || ''
+  };
 }
