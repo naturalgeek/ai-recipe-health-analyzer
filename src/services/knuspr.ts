@@ -164,7 +164,6 @@ export async function callTool(
   email: string,
   password: string,
 ): Promise<McpToolResult> {
-  // Ensure session is initialized
   if (!sessionId) {
     await initialize(email, password);
   }
@@ -187,8 +186,17 @@ export async function callTool(
   return response.result as McpToolResult;
 }
 
+function getToolText(result: McpToolResult): string {
+  return result.content
+    .filter((c) => c.type === 'text' && c.text)
+    .map((c) => c.text!)
+    .join('\n');
+}
+
+// --- Product search ---
+
 export interface KnusprProduct {
-  id: string;
+  id: number;
   name: string;
   price?: string;
   unit?: string;
@@ -202,57 +210,108 @@ export async function searchProducts(
   prompt?: string,
 ): Promise<KnusprProduct[]> {
   const searchQuery = prompt ? `${prompt}: ${query}` : query;
-  const result = await callTool('search', { query: searchQuery }, email, password);
 
-  const text = result.content
-    .filter((c) => c.type === 'text' && c.text)
-    .map((c) => c.text!)
-    .join('\n');
-
-  try {
-    const parsed = JSON.parse(text);
-    if (Array.isArray(parsed)) {
-      return parsed.map((p: Record<string, unknown>) => ({
-        id: String(p.id || ''),
-        name: String(p.name || p.title || ''),
-        price: p.price != null ? String(p.price) : undefined,
-        unit: p.unit ? String(p.unit) : undefined,
-        image: p.image ? String(p.image) : undefined,
-      }));
-    }
-    if (parsed.products && Array.isArray(parsed.products)) {
-      return parsed.products.map((p: Record<string, unknown>) => ({
-        id: String(p.id || ''),
-        name: String(p.name || p.title || ''),
-        price: p.price != null ? String(p.price) : undefined,
-        unit: p.unit ? String(p.unit) : undefined,
-        image: p.image ? String(p.image) : undefined,
-      }));
-    }
-  } catch {
-    // Not JSON — return as single text result
-  }
-
-  return [{ id: '0', name: text }];
-}
-
-export async function addToCart(
-  productId: string,
-  quantity: number,
-  email: string,
-  password: string,
-): Promise<string> {
   const result = await callTool(
-    'add_to_cart',
-    { product_id: productId, quantity },
+    'batch_search_products',
+    { queries: [{ query: searchQuery }] },
     email,
     password,
   );
 
-  return result.content
-    .filter((c) => c.type === 'text' && c.text)
-    .map((c) => c.text!)
-    .join('\n');
+  const text = getToolText(result);
+
+  try {
+    const parsed = JSON.parse(text);
+    // batch_search_products returns an array of query results
+    const products: KnusprProduct[] = [];
+    const items = Array.isArray(parsed) ? parsed : parsed.results || parsed.products || [parsed];
+
+    for (const item of items) {
+      // Each batch result may have a products array
+      const prods = item.products || item.items || (Array.isArray(item) ? item : [item]);
+      for (const p of prods) {
+        if (p.id || p.product_id) {
+          products.push({
+            id: Number(p.id || p.product_id),
+            name: String(p.name || p.title || ''),
+            price: p.price != null ? String(p.price) : (p.unit_price != null ? String(p.unit_price) : undefined),
+            unit: p.unit ? String(p.unit) : undefined,
+            image: p.image ? String(p.image) : (p.image_url ? String(p.image_url) : undefined),
+          });
+        }
+      }
+    }
+
+    return products;
+  } catch {
+    // Not JSON — return raw text
+    return [{ id: 0, name: text }];
+  }
+}
+
+// --- Shopping list management ---
+
+export async function getShoppingLists(
+  email: string,
+  password: string,
+): Promise<Array<{ id: number; name: string; itemCount: number }>> {
+  const result = await callTool('get_user_shopping_lists_preview', {}, email, password);
+  const text = getToolText(result);
+
+  try {
+    const parsed = JSON.parse(text);
+    const lists = Array.isArray(parsed) ? parsed : parsed.lists || parsed.shopping_lists || [];
+    return lists.map((l: Record<string, unknown>) => ({
+      id: Number(l.id || l.list_id || 0),
+      name: String(l.name || ''),
+      itemCount: Number(l.item_count || l.itemCount || l.count || 0),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function createShoppingList(
+  name: string,
+  email: string,
+  password: string,
+): Promise<number> {
+  const result = await callTool(
+    'create_shopping_list',
+    { name, source: 'recipe' },
+    email,
+    password,
+  );
+  const text = getToolText(result);
+
+  try {
+    const parsed = JSON.parse(text);
+    return Number(parsed.id || parsed.list_id || parsed.shopping_list_id || 0);
+  } catch {
+    throw new Error(`Failed to create shopping list: ${text}`);
+  }
+}
+
+export async function addProductsToShoppingList(
+  listId: number,
+  products: Array<{ productId: number; amount: number }>,
+  email: string,
+  password: string,
+): Promise<string> {
+  const result = await callTool(
+    'add_products_to_shopping_list',
+    {
+      list_id: listId,
+      products: products.map((p) => ({
+        product_id: p.productId,
+        amount: p.amount,
+      })),
+    },
+    email,
+    password,
+  );
+
+  return getToolText(result);
 }
 
 export function resetSession(): void {

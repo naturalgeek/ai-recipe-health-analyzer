@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatPrepTime } from '../services/recipeParser';
 import { getOptimizationRecommendations } from '../services/openai';
-import { searchProducts, addToCart } from '../services/knuspr';
+import { searchProducts, createShoppingList, addProductsToShoppingList, getShoppingLists } from '../services/knuspr';
 import type { NutritionalAssessment } from '../types/recipe';
 import type { OptimizationResult } from '../services/openai';
 import type { KnusprProduct } from '../services/knuspr';
@@ -18,8 +18,26 @@ export function RecipeDetail() {
   const [portions, setPortions] = useState('');
   const [cartStates, setCartStates] = useState<Record<number, IngredientCartState>>({});
   const [cartMessage, setCartMessage] = useState<string | null>(null);
+  const [shoppingListId, setShoppingListId] = useState<number | null>(null);
 
   const knusprConfigured = !!(config.knusprEmail && config.knusprPassword);
+
+  const ensureShoppingList = useCallback(async (): Promise<number> => {
+    if (shoppingListId) return shoppingListId;
+
+    // Check if a list for this recipe already exists
+    const lists = await getShoppingLists(config.knusprEmail, config.knusprPassword);
+    const recipeName = selectedRecipe?.name || 'Recipe';
+    const existing = lists.find(l => l.name === recipeName);
+    if (existing) {
+      setShoppingListId(existing.id);
+      return existing.id;
+    }
+
+    const id = await createShoppingList(recipeName, config.knusprEmail, config.knusprPassword);
+    setShoppingListId(id);
+    return id;
+  }, [shoppingListId, config.knusprEmail, config.knusprPassword, selectedRecipe?.name]);
 
   const handleSearchProduct = useCallback(async (ingredient: string, idx: number) => {
     if (!knusprConfigured) return;
@@ -31,24 +49,28 @@ export function RecipeDetail() {
       const msg = err instanceof Error ? err.message : 'Search failed';
       setCartStates(s => ({ ...s, [idx]: { status: 'error', products: [], error: msg } }));
     }
-  }, [config.knusprEmail, config.knusprPassword, knusprConfigured]);
+  }, [config.knusprEmail, config.knusprPassword, config.knusprPrompt, knusprConfigured]);
 
-  const handleAddToCart = useCallback(async (product: KnusprProduct, idx: number) => {
+  const handleAddToList = useCallback(async (product: KnusprProduct, idx: number) => {
     setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'adding' } }));
     try {
-      await addToCart(product.id, 1, config.knusprEmail, config.knusprPassword);
+      const listId = await ensureShoppingList();
+      await addProductsToShoppingList(listId, [{ productId: product.id, amount: 1 }], config.knusprEmail, config.knusprPassword);
       setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'added' } }));
-      setCartMessage(`Added "${product.name}" to cart`);
+      setCartMessage(`Added "${product.name}" to shopping list`);
       setTimeout(() => setCartMessage(null), 3000);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to add to cart';
+      const msg = err instanceof Error ? err.message : 'Failed to add to list';
       setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'error', error: msg } }));
     }
-  }, [config.knusprEmail, config.knusprPassword]);
+  }, [config.knusprEmail, config.knusprPassword, ensureShoppingList]);
 
   useEffect(() => {
     if (selectedRecipe) {
       setPortions(selectedRecipe.yield || '');
+      setCartStates({});
+      setShoppingListId(null);
+      setCartMessage(null);
     }
   }, [selectedRecipe]);
 
@@ -163,7 +185,7 @@ export function RecipeDetail() {
                               className="cart-product-select"
                               onChange={(e) => {
                                 const product = cartState.products[Number(e.target.value)];
-                                if (product) handleAddToCart(product, idx);
+                                if (product) handleAddToList(product, idx);
                               }}
                               defaultValue=""
                             >
