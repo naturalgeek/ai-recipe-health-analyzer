@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { DEFAULT_SYSTEM_PROMPT } from '../services/openai';
+import { listTools } from '../services/knuspr';
 
 export function Settings() {
   const { config, updateConfig } = useApp();
@@ -14,6 +15,8 @@ export function Settings() {
   const [knusprSaved, setKnusprSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [showKnusprPassword, setShowKnusprPassword] = useState(false);
+  const [knusprTools, setKnusprTools] = useState<string | null>(null);
+  const [knusprTesting, setKnusprTesting] = useState(false);
 
   useEffect(() => {
     setApiKey(config.openaiApiKey);
@@ -42,6 +45,19 @@ export function Settings() {
     await updateConfig({ ...config, knusprEmail, knusprPassword, knusprPrompt });
     setKnusprSaved(true);
     setTimeout(() => setKnusprSaved(false), 2000);
+  };
+
+  const handleKnusprTest = async () => {
+    setKnusprTesting(true);
+    setKnusprTools(null);
+    try {
+      const tools = await listTools(knusprEmail, knusprPassword);
+      setKnusprTools(tools.map(t => `${t.name}: ${t.description || '(no description)'}\n  params: ${JSON.stringify(t.inputSchema)}`).join('\n\n'));
+    } catch (err) {
+      setKnusprTools(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setKnusprTesting(false);
+    }
   };
 
   const knusprChanged = knusprEmail !== config.knusprEmail || knusprPassword !== config.knusprPassword || knusprPrompt !== config.knusprPrompt;
@@ -256,6 +272,34 @@ export function Settings() {
         >
           {knusprSaved ? 'Saved!' : 'Save Knuspr Settings'}
         </button>
+
+        {knusprEmail && knusprPassword && (
+          <button
+            className="save-btn"
+            onClick={handleKnusprTest}
+            disabled={knusprTesting}
+            style={{ marginTop: '0.5rem', background: '#666' }}
+          >
+            {knusprTesting ? 'Testing...' : 'Test Connection & List Tools'}
+          </button>
+        )}
+
+        {knusprTools && (
+          <pre className="knuspr-tools-output" style={{
+            marginTop: '0.75rem',
+            padding: '0.75rem',
+            background: '#f5f5f5',
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            maxHeight: '300px',
+            overflow: 'auto',
+          }}>
+            {knusprTools}
+          </pre>
+        )}
       </div>
 
       <div className="settings-section">
