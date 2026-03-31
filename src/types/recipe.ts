@@ -50,4 +50,5 @@ export interface AppConfig {
   dietaryRequirements?: string;
   knusprEmail: string;
   knusprPassword: string;
+  knusprPrompt: string;
 }

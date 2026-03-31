@@ -9,6 +9,7 @@ export function Settings() {
   const [dietaryRequirements, setDietaryRequirements] = useState(config.dietaryRequirements || 'I tolerate all foods');
   const [knusprEmail, setKnusprEmail] = useState(config.knusprEmail);
   const [knusprPassword, setKnusprPassword] = useState(config.knusprPassword);
+  const [knusprPrompt, setKnusprPrompt] = useState(config.knusprPrompt);
   const [saved, setSaved] = useState(false);
   const [knusprSaved, setKnusprSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -23,7 +24,8 @@ export function Settings() {
   useEffect(() => {
     setKnusprEmail(config.knusprEmail);
     setKnusprPassword(config.knusprPassword);
-  }, [config.knusprEmail, config.knusprPassword]);
+    setKnusprPrompt(config.knusprPrompt);
+  }, [config.knusprEmail, config.knusprPassword, config.knusprPrompt]);
 
   const handleSave = async () => {
     await updateConfig({
@@ -37,12 +39,12 @@ export function Settings() {
   };
 
   const handleKnusprSave = async () => {
-    await updateConfig({ ...config, knusprEmail, knusprPassword });
+    await updateConfig({ ...config, knusprEmail, knusprPassword, knusprPrompt });
     setKnusprSaved(true);
     setTimeout(() => setKnusprSaved(false), 2000);
   };
 
-  const knusprChanged = knusprEmail !== config.knusprEmail || knusprPassword !== config.knusprPassword;
+  const knusprChanged = knusprEmail !== config.knusprEmail || knusprPassword !== config.knusprPassword || knusprPrompt !== config.knusprPrompt;
 
   const hasChanges = apiKey !== config.openaiApiKey ||
     systemPrompt !== (config.systemPrompt || DEFAULT_SYSTEM_PROMPT) ||
@@ -232,12 +234,27 @@ export function Settings() {
           </div>
         </div>
 
+        <div className="dietary-input">
+          <label htmlFor="knusprPrompt">Search Prompt (Optional)</label>
+          <textarea
+            id="knusprPrompt"
+            value={knusprPrompt}
+            onChange={(e) => setKnusprPrompt(e.target.value)}
+            placeholder="e.g., prefer organic, cheapest option, brand X..."
+            className="dietary-field"
+            rows={2}
+          />
+          <p className="settings-hint">
+            This text is prepended to every ingredient search to customize product selection.
+          </p>
+        </div>
+
         <button
           className="save-btn"
           onClick={handleKnusprSave}
           disabled={!knusprChanged}
         >
-          {knusprSaved ? 'Saved!' : 'Save Knuspr Credentials'}
+          {knusprSaved ? 'Saved!' : 'Save Knuspr Settings'}
         </button>
       </div>
 

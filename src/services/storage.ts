@@ -149,6 +149,7 @@ export async function getConfig(): Promise<AppConfig> {
         dietaryRequirements: result?.dietaryRequirements || '',
         knusprEmail: result?.knusprEmail || '',
         knusprPassword: result?.knusprPassword || '',
+        knusprPrompt: result?.knusprPrompt || '',
       });
     };
     request.onerror = () => reject(request.error);

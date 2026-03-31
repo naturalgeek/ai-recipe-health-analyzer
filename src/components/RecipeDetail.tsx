@@ -25,7 +25,7 @@ export function RecipeDetail() {
     if (!knusprConfigured) return;
     setCartStates(s => ({ ...s, [idx]: { status: 'searching', products: [] } }));
     try {
-      const products = await searchProducts(ingredient, config.knusprEmail, config.knusprPassword);
+      const products = await searchProducts(ingredient, config.knusprEmail, config.knusprPassword, config.knusprPrompt);
       setCartStates(s => ({ ...s, [idx]: { status: 'results', products } }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Search failed';

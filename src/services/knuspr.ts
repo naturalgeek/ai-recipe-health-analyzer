@@ -1,8 +1,8 @@
 // In dev, requests are proxied via Vite to avoid CORS.
-// In production, a reverse-proxy on the hosting server must forward /knuspr-mcp → https://mcp.knuspr.de/mcp
+// In production, call the MCP server directly (requires CORS support on the server).
 const MCP_ENDPOINT = import.meta.env.DEV
   ? '/knuspr-mcp/'
-  : '/knuspr-mcp/';
+  : 'https://mcp.knuspr.de/mcp/';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -199,8 +199,10 @@ export async function searchProducts(
   query: string,
   email: string,
   password: string,
+  prompt?: string,
 ): Promise<KnusprProduct[]> {
-  const result = await callTool('search', { query }, email, password);
+  const searchQuery = prompt ? `${prompt}: ${query}` : query;
+  const result = await callTool('search', { query: searchQuery }, email, password);
 
   const text = result.content
     .filter((c) => c.type === 'text' && c.text)
