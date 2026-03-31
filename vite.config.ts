@@ -5,4 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/ai-recipe-health-analyzer/',
+  server: {
+    proxy: {
+      '/knuspr-mcp': {
+        target: 'https://mcp.knuspr.de',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/knuspr-mcp/, '/mcp'),
+      },
+    },
+  },
 })

@@ -17,6 +17,7 @@ A Progressive Web App that provides AI-powered nutritional assessment for your r
 - **Personal Diet Score** - Get a personalized 1-10 score based on your dietary requirements
 - **Dietary Requirements** - Configure allergies, intolerances, or preferences (e.g., gluten-free, low sodium)
 - **Custom System Prompt** - Advanced users can customize the AI analysis behavior
+- **Knuspr Grocery Ordering** - Add recipe ingredients directly to your Knuspr shopping cart via the Knuspr MCP server
 - **Ingredient Search** - Browse recipes by ingredient
 - **Offline Support** - Works offline after first load (PWA with service worker)
 - **Install as App** - Add to home screen on iOS and Android for native app experience
@@ -85,7 +86,17 @@ Go to the **Quick Assess** tab and choose one of three methods:
 3. Examples: "gluten intolerant", "lactose free", "low sodium diet", "vegetarian"
 4. The AI will factor these into your Personal Diet Score
 
-### 5. View Nutritional Analysis
+### 5. Order Ingredients via Knuspr (Optional)
+
+1. Go to **Settings** and enter your Knuspr email and password under **Knuspr Grocery Ordering**
+2. Click **Save Knuspr Credentials**
+3. When viewing a recipe, each ingredient will show a **+** button
+4. Click **+** to search Knuspr for matching products
+5. Select a product from the dropdown to add it to your Knuspr cart
+
+The app communicates with the Knuspr MCP server at `mcp.knuspr.de`. In development, requests are proxied through Vite. In production, your web server must reverse-proxy `/knuspr-mcp` to `https://mcp.knuspr.de/mcp`.
+
+### 6. View Nutritional Analysis
 
 Results include:
 - **Health Score** (1-10) - General healthiness of the recipe
@@ -98,6 +109,7 @@ Results include:
 
 - All recipes and assessments are stored locally in your browser (IndexedDB)
 - Your OpenAI API key is stored locally and only sent to OpenAI
+- Your Knuspr credentials are stored locally and only sent to the Knuspr MCP server
 - Recipe URLs are fetched via CORS proxies for compatibility
 - Images are sent to OpenAI for analysis (not stored on any server)
 - Clear all data anytime from Settings

@@ -1,4 +1,8 @@
-const MCP_ENDPOINT = 'https://mcp.knuspr.de/mcp/';
+// In dev, requests are proxied via Vite to avoid CORS.
+// In production, a reverse-proxy on the hosting server must forward /knuspr-mcp → https://mcp.knuspr.de/mcp
+const MCP_ENDPOINT = import.meta.env.DEV
+  ? '/knuspr-mcp/'
+  : '/knuspr-mcp/';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
