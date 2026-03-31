@@ -2,7 +2,7 @@
 // In production, call the MCP server directly (requires CORS support on the server).
 const MCP_ENDPOINT = import.meta.env.DEV
   ? '/knuspr-mcp/'
-  : 'https://mcp.knuspr.de/mcp/';
+  : 'https://mcp.knuspr.de/mcp';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
