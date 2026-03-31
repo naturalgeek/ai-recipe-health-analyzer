@@ -18,6 +18,10 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch - always go to network, no caching
+// Skip cross-origin requests (e.g. MCP API calls) to avoid mixed-content issues
 self.addEventListener('fetch', (event) => {
+  if (new URL(event.request.url).origin !== self.location.origin) {
+    return;
+  }
   event.respondWith(fetch(event.request));
 });
