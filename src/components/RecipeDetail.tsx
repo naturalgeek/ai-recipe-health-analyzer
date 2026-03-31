@@ -1,13 +1,50 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatPrepTime } from '../services/recipeParser';
 import { getOptimizationRecommendations } from '../services/openai';
+import { searchProducts, addToCart } from '../services/knuspr';
 import type { NutritionalAssessment } from '../types/recipe';
 import type { OptimizationResult } from '../services/openai';
+import type { KnusprProduct } from '../services/knuspr';
+
+interface IngredientCartState {
+  status: 'idle' | 'searching' | 'results' | 'adding' | 'added' | 'error';
+  products: KnusprProduct[];
+  error?: string;
+}
 
 export function RecipeDetail() {
   const { selectedRecipe, assessment, isAssessing, assessRecipe, config, error, setError } = useApp();
   const [portions, setPortions] = useState('');
+  const [cartStates, setCartStates] = useState<Record<number, IngredientCartState>>({});
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
+
+  const knusprConfigured = !!(config.knusprEmail && config.knusprPassword);
+
+  const handleSearchProduct = useCallback(async (ingredient: string, idx: number) => {
+    if (!knusprConfigured) return;
+    setCartStates(s => ({ ...s, [idx]: { status: 'searching', products: [] } }));
+    try {
+      const products = await searchProducts(ingredient, config.knusprEmail, config.knusprPassword);
+      setCartStates(s => ({ ...s, [idx]: { status: 'results', products } }));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Search failed';
+      setCartStates(s => ({ ...s, [idx]: { status: 'error', products: [], error: msg } }));
+    }
+  }, [config.knusprEmail, config.knusprPassword, knusprConfigured]);
+
+  const handleAddToCart = useCallback(async (product: KnusprProduct, idx: number) => {
+    setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'adding' } }));
+    try {
+      await addToCart(product.id, 1, config.knusprEmail, config.knusprPassword);
+      setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'added' } }));
+      setCartMessage(`Added "${product.name}" to cart`);
+      setTimeout(() => setCartMessage(null), 3000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to add to cart';
+      setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'error', error: msg } }));
+    }
+  }, [config.knusprEmail, config.knusprPassword]);
 
   useEffect(() => {
     if (selectedRecipe) {
@@ -98,10 +135,67 @@ export function RecipeDetail() {
         <div className="recipe-ingredients">
           <h3>Ingredients</h3>
           <ul>
-            {selectedRecipe.ingredients.map((ing, idx) => (
-              <li key={idx}>{ing}</li>
-            ))}
+            {selectedRecipe.ingredients.map((ing, idx) => {
+              const cartState = cartStates[idx];
+              return (
+                <li key={idx} className="ingredient-item">
+                  <span className="ingredient-text">{ing}</span>
+                  {knusprConfigured && (
+                    <div className="ingredient-cart">
+                      {(!cartState || cartState.status === 'idle') && (
+                        <button
+                          className="cart-search-btn"
+                          onClick={() => handleSearchProduct(ing, idx)}
+                          title="Search on Knuspr"
+                        >
+                          +
+                        </button>
+                      )}
+                      {cartState?.status === 'searching' && (
+                        <span className="cart-spinner">...</span>
+                      )}
+                      {cartState?.status === 'results' && (
+                        <div className="cart-results">
+                          {cartState.products.length === 0 ? (
+                            <span className="cart-no-results">No products found</span>
+                          ) : (
+                            <select
+                              className="cart-product-select"
+                              onChange={(e) => {
+                                const product = cartState.products[Number(e.target.value)];
+                                if (product) handleAddToCart(product, idx);
+                              }}
+                              defaultValue=""
+                            >
+                              <option value="" disabled>Select product...</option>
+                              {cartState.products.slice(0, 5).map((p, i) => (
+                                <option key={p.id} value={i}>
+                                  {p.name}{p.price ? ` - ${p.price}` : ''}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      )}
+                      {cartState?.status === 'adding' && (
+                        <span className="cart-spinner">Adding...</span>
+                      )}
+                      {cartState?.status === 'added' && (
+                        <span className="cart-added">Added</span>
+                      )}
+                      {cartState?.status === 'error' && (
+                        <span className="cart-error" title={cartState.error}>Failed</span>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
+          {!knusprConfigured && selectedRecipe.ingredients.length > 0 && (
+            <p className="config-warning">Configure Knuspr credentials in Settings to order ingredients</p>
+          )}
+          {cartMessage && <div className="cart-message">{cartMessage}</div>}
         </div>
 
         <div className="recipe-directions">

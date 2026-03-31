@@ -7,8 +7,12 @@ export function Settings() {
   const [apiKey, setApiKey] = useState(config.openaiApiKey);
   const [systemPrompt, setSystemPrompt] = useState(config.systemPrompt || DEFAULT_SYSTEM_PROMPT);
   const [dietaryRequirements, setDietaryRequirements] = useState(config.dietaryRequirements || 'I tolerate all foods');
+  const [knusprEmail, setKnusprEmail] = useState(config.knusprEmail);
+  const [knusprPassword, setKnusprPassword] = useState(config.knusprPassword);
   const [saved, setSaved] = useState(false);
+  const [knusprSaved, setKnusprSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [showKnusprPassword, setShowKnusprPassword] = useState(false);
 
   useEffect(() => {
     setApiKey(config.openaiApiKey);
@@ -16,8 +20,14 @@ export function Settings() {
     setDietaryRequirements(config.dietaryRequirements || 'I tolerate all foods');
   }, [config.openaiApiKey, config.systemPrompt, config.dietaryRequirements]);
 
+  useEffect(() => {
+    setKnusprEmail(config.knusprEmail);
+    setKnusprPassword(config.knusprPassword);
+  }, [config.knusprEmail, config.knusprPassword]);
+
   const handleSave = async () => {
     await updateConfig({
+      ...config,
       openaiApiKey: apiKey,
       systemPrompt: systemPrompt,
       dietaryRequirements: dietaryRequirements
@@ -25,6 +35,14 @@ export function Settings() {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  const handleKnusprSave = async () => {
+    await updateConfig({ ...config, knusprEmail, knusprPassword });
+    setKnusprSaved(true);
+    setTimeout(() => setKnusprSaved(false), 2000);
+  };
+
+  const knusprChanged = knusprEmail !== config.knusprEmail || knusprPassword !== config.knusprPassword;
 
   const hasChanges = apiKey !== config.openaiApiKey ||
     systemPrompt !== (config.systemPrompt || DEFAULT_SYSTEM_PROMPT) ||
@@ -170,6 +188,57 @@ export function Settings() {
             </ul>
           </div>
         </div>
+      </div>
+
+      <div className="settings-section">
+        <h3>Knuspr Grocery Ordering</h3>
+        <p className="settings-description">
+          Enter your Knuspr account credentials to enable adding recipe ingredients
+          to your Knuspr shopping cart. Credentials are stored locally in your browser.
+        </p>
+
+        <div className="api-key-input">
+          <label htmlFor="knusprEmail">Email</label>
+          <div className="input-group">
+            <input
+              id="knusprEmail"
+              type="email"
+              value={knusprEmail}
+              onChange={(e) => setKnusprEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="api-key-field"
+            />
+          </div>
+        </div>
+
+        <div className="api-key-input">
+          <label htmlFor="knusprPassword">Password</label>
+          <div className="input-group">
+            <input
+              id="knusprPassword"
+              type={showKnusprPassword ? 'text' : 'password'}
+              value={knusprPassword}
+              onChange={(e) => setKnusprPassword(e.target.value)}
+              placeholder="Password"
+              className="api-key-field"
+            />
+            <button
+              className="toggle-visibility"
+              onClick={() => setShowKnusprPassword(!showKnusprPassword)}
+              type="button"
+            >
+              {showKnusprPassword ? '\u{1F648}' : '\u{1F441}\u{FE0F}'}
+            </button>
+          </div>
+        </div>
+
+        <button
+          className="save-btn"
+          onClick={handleKnusprSave}
+          disabled={!knusprChanged}
+        >
+          {knusprSaved ? 'Saved!' : 'Save Knuspr Credentials'}
+        </button>
       </div>
 
       <div className="settings-section">

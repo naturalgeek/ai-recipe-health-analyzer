@@ -146,7 +146,9 @@ export async function getConfig(): Promise<AppConfig> {
       resolve({
         openaiApiKey: result?.openaiApiKey || '',
         systemPrompt: result?.systemPrompt || '',
-        dietaryRequirements: result?.dietaryRequirements || ''
+        dietaryRequirements: result?.dietaryRequirements || '',
+        knusprEmail: result?.knusprEmail || '',
+        knusprPassword: result?.knusprPassword || '',
       });
     };
     request.onerror = () => reject(request.error);

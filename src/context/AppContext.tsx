@@ -31,7 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     recipes: [],
     selectedRecipe: null,
     assessment: null,
-    config: { openaiApiKey: '', systemPrompt: '', dietaryRequirements: 'I tolerate all foods' },
+    config: { openaiApiKey: '', systemPrompt: '', dietaryRequirements: 'I tolerate all foods', knusprEmail: '', knusprPassword: '' },
     isLoading: true,
     isAssessing: false,
     error: null

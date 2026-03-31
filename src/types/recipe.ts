@@ -48,4 +48,6 @@ export interface AppConfig {
   openaiApiKey: string;
   systemPrompt?: string;
   dietaryRequirements?: string;
+  knusprEmail: string;
+  knusprPassword: string;
 }
