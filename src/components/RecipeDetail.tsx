@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatPrepTime } from '../services/recipeParser';
 import { getOptimizationRecommendations } from '../services/openai';
-import { searchProducts, createShoppingList, addProductsToShoppingList, getShoppingLists } from '../services/knuspr';
+import { searchProducts, addToCart } from '../services/knuspr';
 import type { NutritionalAssessment } from '../types/recipe';
 import type { OptimizationResult } from '../services/openai';
 import type { KnusprProduct } from '../services/knuspr';
@@ -18,26 +18,8 @@ export function RecipeDetail() {
   const [portions, setPortions] = useState('');
   const [cartStates, setCartStates] = useState<Record<number, IngredientCartState>>({});
   const [cartMessage, setCartMessage] = useState<string | null>(null);
-  const [shoppingListId, setShoppingListId] = useState<number | null>(null);
 
   const knusprConfigured = !!(config.knusprEmail && config.knusprPassword);
-
-  const ensureShoppingList = useCallback(async (): Promise<number> => {
-    if (shoppingListId) return shoppingListId;
-
-    // Check if a list for this recipe already exists
-    const lists = await getShoppingLists(config.knusprEmail, config.knusprPassword);
-    const recipeName = selectedRecipe?.name || 'Recipe';
-    const existing = lists.find(l => l.name === recipeName);
-    if (existing) {
-      setShoppingListId(existing.id);
-      return existing.id;
-    }
-
-    const id = await createShoppingList(recipeName, config.knusprEmail, config.knusprPassword);
-    setShoppingListId(id);
-    return id;
-  }, [shoppingListId, config.knusprEmail, config.knusprPassword, selectedRecipe?.name]);
 
   const handleSearchProduct = useCallback(async (ingredient: string, idx: number) => {
     if (!knusprConfigured) return;
@@ -51,25 +33,23 @@ export function RecipeDetail() {
     }
   }, [config.knusprEmail, config.knusprPassword, config.knusprPrompt, knusprConfigured]);
 
-  const handleAddToList = useCallback(async (product: KnusprProduct, idx: number) => {
+  const handleAddToCart = useCallback(async (product: KnusprProduct, idx: number) => {
     setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'adding' } }));
     try {
-      const listId = await ensureShoppingList();
-      await addProductsToShoppingList(listId, [{ productId: product.id, amount: 1 }], config.knusprEmail, config.knusprPassword);
+      await addToCart([{ productId: product.id, quantity: 1 }], config.knusprEmail, config.knusprPassword);
       setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'added' } }));
-      setCartMessage(`Added "${product.name}" to shopping list`);
+      setCartMessage(`Added "${product.name}" to cart`);
       setTimeout(() => setCartMessage(null), 3000);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to add to list';
+      const msg = err instanceof Error ? err.message : 'Failed to add to cart';
       setCartStates(s => ({ ...s, [idx]: { ...s[idx], status: 'error', error: msg } }));
     }
-  }, [config.knusprEmail, config.knusprPassword, ensureShoppingList]);
+  }, [config.knusprEmail, config.knusprPassword]);
 
   useEffect(() => {
     if (selectedRecipe) {
       setPortions(selectedRecipe.yield || '');
       setCartStates({});
-      setShoppingListId(null);
       setCartMessage(null);
     }
   }, [selectedRecipe]);
@@ -185,7 +165,7 @@ export function RecipeDetail() {
                               className="cart-product-select"
                               onChange={(e) => {
                                 const product = cartState.products[Number(e.target.value)];
-                                if (product) handleAddToList(product, idx);
+                                if (product) handleAddToCart(product, idx);
                               }}
                               defaultValue=""
                             >

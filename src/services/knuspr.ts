@@ -276,62 +276,20 @@ export async function searchProducts(
   }
 }
 
-// --- Shopping list management ---
+// --- Cart management ---
 
-export async function getShoppingLists(
-  email: string,
-  password: string,
-): Promise<Array<{ id: number; name: string; itemCount: number }>> {
-  const result = await callTool('get_user_shopping_lists_preview', {}, email, password);
-  const text = getToolText(result);
-
-  try {
-    const parsed = JSON.parse(text);
-    const lists = Array.isArray(parsed) ? parsed : parsed.lists || parsed.shopping_lists || [];
-    return lists.map((l: Record<string, unknown>) => ({
-      id: Number(l.id || l.list_id || 0),
-      name: String(l.name || ''),
-      itemCount: Number(l.item_count || l.itemCount || l.count || 0),
-    }));
-  } catch {
-    return [];
-  }
-}
-
-export async function createShoppingList(
-  name: string,
-  email: string,
-  password: string,
-): Promise<number> {
-  const result = await callTool(
-    'create_shopping_list',
-    { name, source: 'recipe' },
-    email,
-    password,
-  );
-  const text = getToolText(result);
-
-  try {
-    const parsed = JSON.parse(text);
-    return Number(parsed.id || parsed.list_id || parsed.shopping_list_id || 0);
-  } catch {
-    throw new Error(`Failed to create shopping list: ${text}`);
-  }
-}
-
-export async function addProductsToShoppingList(
-  listId: number,
-  products: Array<{ productId: number; amount: number }>,
+export async function addToCart(
+  items: Array<{ productId: number; quantity: number }>,
   email: string,
   password: string,
 ): Promise<string> {
   const result = await callTool(
-    'add_products_to_shopping_list',
+    'add_to_cart',
     {
-      list_id: listId,
-      products: products.map((p) => ({
-        product_id: p.productId,
-        amount: p.amount,
+      items: items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        source: 'mcp',
       })),
     },
     email,
