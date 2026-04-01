@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { DEFAULT_SYSTEM_PROMPT } from '../services/openai';
-import { listTools } from '../services/knuspr';
+import { listTools, fetchMcpDocs } from '../services/knuspr';
 
 export function Settings() {
   const { config, updateConfig } = useApp();
@@ -52,7 +52,30 @@ export function Settings() {
     setKnusprTools(null);
     try {
       const tools = await listTools(knusprEmail, knusprPassword);
-      setKnusprTools(tools.map(t => `${t.name}: ${t.description || '(no description)'}\n  params: ${JSON.stringify(t.inputSchema)}`).join('\n\n'));
+      const cartTools = tools.filter(t =>
+        t.name.toLowerCase().includes('cart') ||
+        t.name.toLowerCase().includes('basket') ||
+        t.name.toLowerCase().includes('warenkorb')
+      );
+      const header = `Found ${tools.length} tools total. Cart-related: ${cartTools.length}\n\n`;
+      const cartSection = cartTools.length > 0
+        ? '=== CART TOOLS ===\n' + cartTools.map(t => `${t.name}: ${t.description || ''}\n  params: ${JSON.stringify(t.inputSchema, null, 2)}`).join('\n\n') + '\n\n'
+        : '';
+      const allSection = '=== ALL TOOLS ===\n' + tools.map(t => `${t.name}: ${t.description || '(no description)'}\n  params: ${JSON.stringify(t.inputSchema, null, 2)}`).join('\n\n');
+      setKnusprTools(header + cartSection + allSection);
+    } catch (err) {
+      setKnusprTools(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setKnusprTesting(false);
+    }
+  };
+
+  const handleFetchDocs = async () => {
+    setKnusprTesting(true);
+    setKnusprTools(null);
+    try {
+      const docs = await fetchMcpDocs(knusprEmail, knusprPassword);
+      setKnusprTools(docs);
     } catch (err) {
       setKnusprTools(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -274,14 +297,24 @@ export function Settings() {
         </button>
 
         {knusprEmail && knusprPassword && (
-          <button
-            className="save-btn"
-            onClick={handleKnusprTest}
-            disabled={knusprTesting}
-            style={{ marginTop: '0.5rem', background: '#666' }}
-          >
-            {knusprTesting ? 'Testing...' : 'Test Connection & List Tools'}
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <button
+              className="save-btn"
+              onClick={handleKnusprTest}
+              disabled={knusprTesting}
+              style={{ background: '#666' }}
+            >
+              {knusprTesting ? 'Loading...' : 'List Tools'}
+            </button>
+            <button
+              className="save-btn"
+              onClick={handleFetchDocs}
+              disabled={knusprTesting}
+              style={{ background: '#666' }}
+            >
+              Fetch MCP Docs
+            </button>
+          </div>
         )}
 
         {knusprTools && (

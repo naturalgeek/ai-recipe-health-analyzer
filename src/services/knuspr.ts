@@ -144,18 +144,45 @@ export async function listTools(
 ): Promise<McpTool[]> {
   await initialize(email, password);
 
-  const response = await mcpRequest(
-    { jsonrpc: '2.0', method: 'tools/list', params: {}, id: nextId() },
-    email,
-    password,
-  );
+  const allTools: McpTool[] = [];
+  let cursor: string | undefined;
 
-  if (response.error) {
-    throw new Error(`tools/list failed: ${response.error.message}`);
+  // Handle pagination
+  do {
+    const params: Record<string, unknown> = {};
+    if (cursor) params.cursor = cursor;
+
+    const response = await mcpRequest(
+      { jsonrpc: '2.0', method: 'tools/list', params, id: nextId() },
+      email,
+      password,
+    );
+
+    if (response.error) {
+      throw new Error(`tools/list failed: ${response.error.message}`);
+    }
+
+    const result = response.result as { tools: McpTool[]; nextCursor?: string };
+    allTools.push(...result.tools);
+    cursor = result.nextCursor;
+  } while (cursor);
+
+  return allTools;
+}
+
+export async function fetchMcpDocs(
+  email: string,
+  password: string,
+): Promise<string> {
+  if (!sessionId) {
+    await initialize(email, password);
   }
 
-  const result = response.result as { tools: McpTool[] };
-  return result.tools;
+  const result = await callTool('get_faq_content', { category: 'mcp_server' }, email, password);
+  return result.content
+    .filter((c) => c.type === 'text' && c.text)
+    .map((c) => c.text!)
+    .join('\n');
 }
 
 export async function callTool(
