@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { formatPrepTime } from '../services/recipeParser';
 import { getOptimizationRecommendations } from '../services/openai';
-import { searchProducts, addToCart, fetchProductImages } from '../services/knuspr';
+import { searchProducts, addToCart } from '../services/knuspr';
 import type { NutritionalAssessment } from '../types/recipe';
 import type { OptimizationResult } from '../services/openai';
 import type { KnusprProduct } from '../services/knuspr';
@@ -27,19 +27,6 @@ export function RecipeDetail() {
     try {
       const products = await searchProducts(ingredient, config.knusprEmail, config.knusprPassword, config.knusprPrompt);
       setCartStates(s => ({ ...s, [idx]: { status: 'results', products } }));
-      // Fetch images asynchronously
-      const ids = products.map(p => p.id).filter(id => id > 0);
-      if (ids.length > 0) {
-        fetchProductImages(ids, config.knusprEmail, config.knusprPassword)
-          .then(images => {
-            setCartStates(s => {
-              const state = s[idx];
-              if (!state || state.status !== 'results') return s;
-              return { ...s, [idx]: { ...state, products: state.products.map(p => images[p.id] ? { ...p, image: images[p.id] } : p) } };
-            });
-          })
-          .catch(() => {}); // Silently ignore — images are optional
-      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Search failed';
       setCartStates(s => ({ ...s, [idx]: { status: 'error', products: [], error: msg } }));

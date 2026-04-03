@@ -243,7 +243,7 @@ export async function searchProducts(
 
   const result = await callTool(
     'batch_search_products',
-    { queries: [{ keyword: searchQuery }] },
+    { queries: [{ keyword: searchQuery, include_fields: ['imgPath'] }] },
     email,
     password,
   );
@@ -269,7 +269,7 @@ export async function searchProducts(
             name: String(p.productName || p.name || p.title || ''),
             price,
             unit: p.textualAmount ? String(p.textualAmount) : (p.unit ? String(p.unit) : undefined),
-            image: p.image ? String(p.image) : (p.image_url ? String(p.image_url) : undefined),
+            image: p.imgPath ? String(p.imgPath) : (p.image ? String(p.image) : (p.image_url ? String(p.image_url) : undefined)),
           });
         }
       }
@@ -280,38 +280,6 @@ export async function searchProducts(
     // Not JSON — return raw text
     return [{ id: 0, name: text }];
   }
-}
-
-export async function fetchProductImages(
-  productIds: number[],
-  email: string,
-  password: string,
-): Promise<Record<number, string>> {
-  const result = await callTool(
-    'get_products_details_batch',
-    { product_ids: productIds },
-    email,
-    password,
-  );
-
-  const text = getToolText(result);
-  const images: Record<number, string> = {};
-
-  try {
-    const parsed = JSON.parse(text);
-    // Response is keyed by product ID
-    for (const [key, val] of Object.entries(parsed)) {
-      const p = val as Record<string, unknown>;
-      const pid = Number(p.productId || key);
-      if (p.imgPath && typeof p.imgPath === 'string') {
-        images[pid] = p.imgPath;
-      }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-
-  return images;
 }
 
 // --- Cart management ---
