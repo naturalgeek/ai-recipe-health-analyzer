@@ -249,20 +249,33 @@ export async function searchProducts(
 ): Promise<KnusprProduct[]> {
   const searchQuery = prompt ? `${prompt}: ${query}` : query;
 
-  const result = await callTool(
-    'batch_search_products',
-    { queries: [{ keyword: searchQuery, include_fields: ['imgPath'] }] },
-    email,
-    password,
-  );
+  // Two parallel searches: one for product data, one for images
+  const [dataResult, imgResult] = await Promise.all([
+    callTool('batch_search_products', { queries: [{ keyword: searchQuery }] }, email, password),
+    callTool('batch_search_products', { queries: [{ keyword: searchQuery, include_fields: ['imgPath'] }] }, email, password)
+      .catch(() => null),
+  ]);
 
-  const text = getToolText(result);
+  const text = getToolText(dataResult);
 
   try {
     const parsed = JSON.parse(text);
-    // batch_search_products returns an array of query results
     const products: KnusprProduct[] = [];
     const items = Array.isArray(parsed) ? parsed : parsed.results || parsed.products || [parsed];
+
+    // Build image map from parallel request
+    const imageMap: Record<number, string> = {};
+    if (imgResult) {
+      try {
+        const imgParsed = JSON.parse(getToolText(imgResult));
+        const imgItems = Array.isArray(imgParsed) ? imgParsed : imgParsed.results || [imgParsed];
+        for (const item of imgItems) {
+          for (const p of item.products || []) {
+            if (p.productId && p.imgPath) imageMap[p.productId] = p.imgPath;
+          }
+        }
+      } catch { /* ignore */ }
+    }
 
     for (const item of items) {
       const prods = item.products || item.items || (Array.isArray(item) ? item : [item]);
@@ -277,7 +290,7 @@ export async function searchProducts(
             name: String(p.productName || p.name || p.title || ''),
             price,
             unit: p.textualAmount ? String(p.textualAmount) : (p.unit ? String(p.unit) : undefined),
-            image: resolveImageUrl(p.imgPath || p.image || p.image_url),
+            image: resolveImageUrl(imageMap[Number(pid)] || p.imgPath || p.image || p.image_url),
           });
         }
       }
@@ -285,7 +298,6 @@ export async function searchProducts(
 
     return products;
   } catch {
-    // Not JSON — return raw text
     return [{ id: 0, name: text }];
   }
 }
