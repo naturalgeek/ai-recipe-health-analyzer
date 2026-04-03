@@ -161,21 +161,29 @@ export function RecipeDetail() {
                           {cartState.products.length === 0 ? (
                             <span className="cart-no-results">No products found</span>
                           ) : (
-                            <select
-                              className="cart-product-select"
-                              onChange={(e) => {
-                                const product = cartState.products[Number(e.target.value)];
-                                if (product) handleAddToCart(product, idx);
-                              }}
-                              defaultValue=""
-                            >
-                              <option value="" disabled>Select product...</option>
-                              {cartState.products.slice(0, 5).map((p, i) => (
-                                <option key={p.id} value={i}>
-                                  {p.name}{p.unit ? ` (${p.unit})` : ''}{p.price ? ` - ${p.price}` : ''}
-                                </option>
-                              ))}
-                            </select>
+                            <>
+                              <div className="cart-results-backdrop" onClick={() => setCartStates(s => ({ ...s, [idx]: { status: 'idle', products: [] } }))} />
+                              <div className="cart-results-popup">
+                                <div className="cart-popup-header">
+                                  <span>Select product for: <strong>{ing}</strong></span>
+                                  <button className="cart-popup-close" onClick={() => setCartStates(s => ({ ...s, [idx]: { status: 'idle', products: [] } }))}>&times;</button>
+                                </div>
+                                <ul className="cart-product-list">
+                                  {cartState.products.slice(0, 5).map((p) => (
+                                    <li key={p.id} className="cart-product-item" onClick={() => handleAddToCart(p, idx)}>
+                                      {p.image && <img src={p.image} alt={p.name} className="cart-product-img" />}
+                                      <div className="cart-product-info">
+                                        <span className="cart-product-name">{p.name}</span>
+                                        <span className="cart-product-meta">
+                                          {p.unit && <span>{p.unit}</span>}
+                                          {p.price && <span className="cart-product-price">{p.price}</span>}
+                                        </span>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </>
                           )}
                         </div>
                       )}
