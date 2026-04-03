@@ -257,15 +257,18 @@ export async function searchProducts(
     const items = Array.isArray(parsed) ? parsed : parsed.results || parsed.products || [parsed];
 
     for (const item of items) {
-      // Each batch result may have a products array
       const prods = item.products || item.items || (Array.isArray(item) ? item : [item]);
       for (const p of prods) {
-        if (p.id || p.product_id) {
+        const pid = p.productId || p.id || p.product_id;
+        if (pid) {
+          const price = p.price && typeof p.price === 'object'
+            ? `${p.price.full} ${p.price.currency || '€'}`
+            : (p.price != null ? String(p.price) : undefined);
           products.push({
-            id: Number(p.id || p.product_id),
-            name: String(p.name || p.title || ''),
-            price: p.price != null ? String(p.price) : (p.unit_price != null ? String(p.unit_price) : undefined),
-            unit: p.unit ? String(p.unit) : undefined,
+            id: Number(pid),
+            name: String(p.productName || p.name || p.title || ''),
+            price,
+            unit: p.textualAmount ? String(p.textualAmount) : (p.unit ? String(p.unit) : undefined),
             image: p.image ? String(p.image) : (p.image_url ? String(p.image_url) : undefined),
           });
         }

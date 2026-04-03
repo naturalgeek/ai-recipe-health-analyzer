@@ -172,7 +172,7 @@ export function RecipeDetail() {
                               <option value="" disabled>Select product...</option>
                               {cartState.products.slice(0, 5).map((p, i) => (
                                 <option key={p.id} value={i}>
-                                  {p.name}{p.price ? ` - ${p.price}` : ''}
+                                  {p.name}{p.unit ? ` (${p.unit})` : ''}{p.price ? ` - ${p.price}` : ''}
                                 </option>
                               ))}
                             </select>
