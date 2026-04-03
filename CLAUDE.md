@@ -31,13 +31,14 @@ npm run preview  # Preview production build locally
 - **recipeParser.ts**: Parses RecipeKeeper HTML format using DOMParser
 - **storage.ts**: IndexedDB wrapper with stores for `recipes`, `assessments`, `config`
 - **openai.ts**: Nutritional analysis via GPT-5.2, supports text and image (vision) analysis. System prompt is embedded directly in the prompt text (not via API `instructions` parameter). Includes dietary requirements in prompt when configured.
+- **knuspr.ts**: MCP client for Knuspr grocery ordering (see Knuspr MCP Integration below)
 
 ### Key Components (`src/components/`)
 
 - **PasteRecipe.tsx**: Quick assessment with URL fetch, text paste, and image upload. Contains `DietaryTooltip` component.
 - **InstallPrompt.tsx**: PWA install prompts for iOS and Android (mobile banner with instructions), plus desktop toast promoting mobile app
-- **RecipeDetail.tsx**: Recipe display with editable servings, assessment results, re-analyze button. Contains `DietaryTooltip` component.
-- **Settings.tsx**: API key configuration with setup tutorial, personal dietary requirements, custom system prompt
+- **RecipeDetail.tsx**: Recipe display with editable servings, assessment results, re-analyze button, Knuspr product search/cart popup. Contains `DietaryTooltip` component.
+- **Settings.tsx**: API key configuration with setup tutorial, personal dietary requirements, custom system prompt, Knuspr credentials
 
 ### Assessment Scores
 
@@ -65,6 +66,33 @@ Single React Context (`AppContext.tsx`) manages: recipes, selected recipe, asses
 - **GitHub Pages**: Auto-deploys on push to main via `.github/workflows/pages.yml`
 - **Releases**: Auto version bump and release on push to main via `.github/workflows/release.yml`
 - Vite base path is `/ai-recipe-health-analyzer/` for GitHub Pages
+
+## Knuspr MCP Integration
+
+The app integrates with the Knuspr grocery service via the Model Context Protocol (MCP) to add recipe ingredients to a shopping cart.
+
+### MCP Client (`src/services/knuspr.ts`)
+
+- **Protocol**: JSON-RPC 2.0 over HTTP with SSE responses
+- **Endpoint**: `https://mcp.knuspr.de/mcp` (production), `/knuspr-mcp/` (dev, proxied via Vite)
+- **Auth**: Custom headers `rhl-email` and `rhl-pass` on every request
+- **Session**: Server may return `Mcp-Session-Id` header; an `initialized` flag tracks whether `initialize` + `notifications/initialized` handshake has been done
+- **All responses** require `Accept: application/json, text/event-stream` header (server rejects without it)
+
+### MCP Tools Used
+
+| Tool | Purpose | Key params |
+|---|---|---|
+| `batch_search_products` | Search products by keyword | `queries: [{keyword}]` — note: `include_fields` restricts response to only those fields |
+| `add_items_to_cart` | Add to cart | `items: [{productId, quantity, source: 'mcp'}]` |
+| `get_faq_content` | Fetch MCP docs | `category: 'mcp_server'` |
+
+### Important Implementation Details
+
+- **Product search** fires two parallel `batch_search_products` calls: one for full data (name, price, unit), one with `include_fields: ['imgPath']` for images. Results are merged by `productId`.
+- **Image URLs** from the API are relative paths (e.g. `/images/grocery/products/123/...`). The `resolveImageUrl()` helper prepends `https://cdn.knuspr.de`.
+- **SSE parsing**: `parseSSEResponse()` extracts the last `data:` line as the complete JSON-RPC response (no streaming).
+- **Config fields**: `knusprEmail`, `knusprPassword`, `knusprPrompt` (optional search prompt prepended to ingredient queries) stored in IndexedDB via AppConfig.
 
 ## URL Fetching
 

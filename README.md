@@ -89,12 +89,14 @@ Go to the **Quick Assess** tab and choose one of three methods:
 ### 5. Order Ingredients via Knuspr (Optional)
 
 1. Go to **Settings** and enter your Knuspr email and password under **Knuspr Grocery Ordering**
-2. Click **Save Knuspr Credentials**
-3. When viewing a recipe, each ingredient will show a **+** button
-4. Click **+** to search Knuspr for matching products
-5. Select a product from the dropdown to add it to your Knuspr cart
+2. Optionally add a **Search Prompt** to customize results (e.g., "prefer organic, cheapest option")
+3. Click **Save Knuspr Credentials**
+4. When viewing a recipe, each ingredient will show a **+** button
+5. Click **+** to search Knuspr for matching products
+6. A popup shows matching products with images, prices, and amounts
+7. Click a product to add it to your Knuspr cart
 
-The app communicates with the Knuspr MCP server at `mcp.knuspr.de`. In development, requests are proxied through Vite. In production, your web server must reverse-proxy `/knuspr-mcp` to `https://mcp.knuspr.de/mcp`.
+The app communicates directly with the Knuspr MCP server at `mcp.knuspr.de` using the Model Context Protocol (JSON-RPC 2.0 over HTTP). In development, requests are proxied through Vite to avoid CORS issues.
 
 ### 6. View Nutritional Analysis
 
@@ -131,6 +133,7 @@ npm run lint     # Run ESLint
 - IndexedDB for local storage
 - JSZip for recipe import
 - OpenAI API (GPT-5.2 with vision) for nutritional analysis
+- Knuspr MCP server for grocery ordering (JSON-RPC 2.0 over HTTP)
 - Sharp for icon generation
 
 ## License
