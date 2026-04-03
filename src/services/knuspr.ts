@@ -223,6 +223,14 @@ function getToolText(result: McpToolResult): string {
     .join('\n');
 }
 
+const KNUSPR_CDN = 'https://cdn.knuspr.de';
+
+function resolveImageUrl(path: unknown): string | undefined {
+  if (!path || typeof path !== 'string') return undefined;
+  if (path.startsWith('http')) return path;
+  return `${KNUSPR_CDN}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
 // --- Product search ---
 
 export interface KnusprProduct {
@@ -269,7 +277,7 @@ export async function searchProducts(
             name: String(p.productName || p.name || p.title || ''),
             price,
             unit: p.textualAmount ? String(p.textualAmount) : (p.unit ? String(p.unit) : undefined),
-            image: p.imgPath ? String(p.imgPath) : (p.image ? String(p.image) : (p.image_url ? String(p.image_url) : undefined)),
+            image: resolveImageUrl(p.imgPath || p.image || p.image_url),
           });
         }
       }
