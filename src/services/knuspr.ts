@@ -30,6 +30,7 @@ interface McpToolResult {
 }
 
 let sessionId: string | null = null;
+let initialized = false;
 let requestId = 0;
 
 function nextId() {
@@ -101,6 +102,7 @@ async function sendNotification(
 ): Promise<void> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    Accept: 'application/json, text/event-stream',
     'rhl-email': email,
     'rhl-pass': password,
   };
@@ -136,6 +138,7 @@ async function initialize(email: string, password: string): Promise<void> {
   }
 
   await sendNotification('notifications/initialized', undefined, email, password);
+  initialized = true;
 }
 
 export async function listTools(
@@ -174,7 +177,7 @@ export async function fetchMcpDocs(
   email: string,
   password: string,
 ): Promise<string> {
-  if (!sessionId) {
+  if (!sessionId && !initialized) {
     await initialize(email, password);
   }
 
@@ -191,7 +194,7 @@ export async function callTool(
   email: string,
   password: string,
 ): Promise<McpToolResult> {
-  if (!sessionId) {
+  if (!sessionId && !initialized) {
     await initialize(email, password);
   }
 
@@ -240,7 +243,7 @@ export async function searchProducts(
 
   const result = await callTool(
     'batch_search_products',
-    { queries: [{ query: searchQuery }] },
+    { queries: [{ keyword: searchQuery }] },
     email,
     password,
   );
@@ -284,7 +287,7 @@ export async function addToCart(
   password: string,
 ): Promise<string> {
   const result = await callTool(
-    'add_to_cart',
+    'add_items_to_cart',
     {
       items: items.map((item) => ({
         productId: item.productId,
@@ -301,5 +304,6 @@ export async function addToCart(
 
 export function resetSession(): void {
   sessionId = null;
+  initialized = false;
   requestId = 0;
 }
