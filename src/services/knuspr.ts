@@ -282,6 +282,38 @@ export async function searchProducts(
   }
 }
 
+export async function fetchProductImages(
+  productIds: number[],
+  email: string,
+  password: string,
+): Promise<Record<number, string>> {
+  const result = await callTool(
+    'get_products_details_batch',
+    { product_ids: productIds },
+    email,
+    password,
+  );
+
+  const text = getToolText(result);
+  const images: Record<number, string> = {};
+
+  try {
+    const parsed = JSON.parse(text);
+    // Response is keyed by product ID
+    for (const [key, val] of Object.entries(parsed)) {
+      const p = val as Record<string, unknown>;
+      const pid = Number(p.productId || key);
+      if (p.imgPath && typeof p.imgPath === 'string') {
+        images[pid] = p.imgPath;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  return images;
+}
+
 // --- Cart management ---
 
 export async function addToCart(
